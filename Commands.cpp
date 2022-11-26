@@ -123,6 +123,13 @@ void JobsCommand::execute()
   this->job_list->printJobsList();
 }
 
+BackgroundCommand::BackgroundCommand(const_cast* cmd_line , JobsList* job_list):BuiltInCommand(cmd_line),job_list(job_list){}
+
+void BackgroundCommand::execute(){
+  
+}
+
+
 SmallShell::SmallShell() {
 // TODO: add your implementation
 }

@@ -10,7 +10,6 @@
 using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
-int argc;
 
 #if 0
 #define FUNC_ENTRY()  \
@@ -83,7 +82,7 @@ ShowPidCommand::ShowPidCommand(const char *cmd_line): BuiltInCommand(cmd_line){
 
 void ShowPidCommand::execute() {
     string to_print="smash pid is ";
-    std::cout << to_print << this->current_shell->getShellpid()<<std::endl;
+    std::cout << to_print << this->current_shell->getShellpid()<<std::endl; //getShellpid() implementation??
 }
 
 void ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **plastPwd):BuiltInCommand(cmd_line)
@@ -92,12 +91,92 @@ void ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **plastPwd):B
 }
 
 void ChangeDirCommand::execute() {
-    if (argc == 1)
-        return;
-    if (argc > 2) {
-        std::cerr << "smash error: cd: too many arguments" << std::endl;
+    int args_num = this->getNumofArg();
+    if (args_num >2)
+    {
+        std:cerr <<"smash error: cd: too many arguments"<<std:endl;
         return;
     }
+    if (args_num == 1)
+        return;
+    char* current_prev = get_current_dir();  //get_current_dir() implementation??
+    if (arg[1] == "-") {
+        char *prev_dir = *(this->last_directory);
+        if (!prev_dir)
+        {
+            std:cerr <<"smash error: cd: OLDPWD not set"<<std:endl;
+            return;
+        }
+        else if (chdir(prev_dir) != 0)
+        {
+            std:cerr <<"smash error: cd: chdir failed"<<std:endl;
+            delete [] current_prev;
+            return;
+        }
+    }
+    else if (chdir(arg[1]) != 0)
+    {
+        std:cerr <<"smash error: cd: chdir failed"<<std:endl;
+        delete [] current_prev;
+        return;
+    }
+
+    delete [] this->current_shell->shell_prev_directory; //shellprevdirectory implementation??
+    this->current_shell->shell_prev_directory = current_prev;
+
+}
+
+
+ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line)
+{
+    this->job_list = jobs;  //joblist implementation??
+    if(getNumofArg() == 1)
+        this->job_id = -1;  //jobid implementation??
+    else if (getNumofArg() ==2)
+    {
+        int temp = stoi(arg[1]);
+        job_id = temp;
+        if (this->jobid <= 0) {
+            std:cerr << "smash error: fg: job-id " + to_string(job_id) + " does not exist" << std:endl;
+            return;
+        }
+    }
+    else
+    {
+        std:cerr <<"smash error: fg: invalid arguments"<<std:endl;
+        return;
+    }
+}
+
+void ForegroundCommand::execute() {
+    this->current_shell->resume(job_id,1); //resume implementation??
+}
+
+QuitCommand::QuitCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line){
+    this->jobs_list = jobs;//joblist implementation??
+}
+
+void QuitCommand::execute() {
+    int args_num = getNumofArg();
+    bool  kill_all =false;
+    for (int i = 0; i < args_num; i++)
+    {
+        if (arg[i] == "kill")
+        {
+            kill_all = true;
+            break;
+        }
+    }
+
+    if (kill_all = true)
+    {
+        job_list->removeFinishedJobs();
+        list<JobsList::JobEntry>* temp_list = (job_list->get_list()); //get_list implementation??
+        int jobs_num = temp_list->size();
+        std:cout <<"smash: sending SIGKILL signal to " + jobs_num + " jobs:"<<std:endl;
+        jobs_list->killAllJobs();
+    }
+    exit (0);
 }
 
 chpromptCommand::chpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line),prompt("smash"){

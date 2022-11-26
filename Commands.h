@@ -7,15 +7,15 @@
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
+using namespace std;
 
 class SmallShell;
-
+class JobsList ;
 class Command {
 
 
     static SmallShell* current_shell;
- public:
- 
+ public:  
   Command(const char* cmd_line);
   virtual ~Command();
   virtual void execute() = 0;
@@ -149,10 +149,12 @@ class ForegroundCommand : public BuiltInCommand {
 
 class BackgroundCommand : public BuiltInCommand {
  // TODO: Add your data members
+  JobsList* job_list;
  public:
   BackgroundCommand(const char* cmd_line, JobsList* jobs);
   virtual ~BackgroundCommand() {}
   void execute() override;
+  
 };
 
 class TimeoutCommand : public BuiltInCommand {
@@ -208,9 +210,6 @@ private:
   }
   ~SmallShell();
   void executeCommand(const char* cmd_line);
-
-
-
 
   const int getShellpid();
 };

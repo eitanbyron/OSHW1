@@ -2,6 +2,8 @@
 #define SMASH_COMMAND_H_
 
 #include <vector>
+#include <string>
+#include <unistd.h>
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
@@ -13,12 +15,15 @@ class Command {
 
     static SmallShell* current_shell;
  public:
+ 
   Command(const char* cmd_line);
   virtual ~Command();
   virtual void execute() = 0;
   //virtual void prepare();
   //virtual void cleanup();
   // TODO: Add your extra methods if needed
+  vector<string> arg;
+  int getNumofArg(){return arg.size();}
 };
 
 class BuiltInCommand : public Command {
@@ -66,12 +71,7 @@ class GetCurrDirCommand : public BuiltInCommand {
   void execute() override;
 };
 
-class ShowPidCommand : public BuiltInCommand {
- public:
-  ShowPidCommand(const char* cmd_line);
-  virtual ~ShowPidCommand() {}
-  void execute() override;
-};
+
 
 class JobsList;
 class QuitCommand : public BuiltInCommand {
@@ -103,13 +103,41 @@ class JobsList {
   // TODO: Add extra methods or modify exisitng ones as needed
 };
 
+
+//**********************built in commands***************************************//
+class chpromptCommand : public BuiltInCommand {
+ // TODO: Add your data members
+ string prompt;
+ string new_prompt;
+ public:
+  chpromptCommand(const char* cmd_line);
+  virtual ~chpromptCommand() {}
+  void chpromptCommand() override;
+};
+
+class ShowPidCommand : public BuiltInCommand {
+ public:
+  ShowPidCommand(const char* cmd_line);
+  virtual ~ShowPidCommand() {}
+  void execute() override;
+};
+
+class pwdCommand : public BuiltInCommand {
+  public:
+  pwdCommand(const char* cmd_line);
+  virtual ~pwdCommand() {};
+  void execute() override;
+};
+
 class JobsCommand : public BuiltInCommand {
  // TODO: Add your data members
+  JobList *job_list;
  public:
   JobsCommand(const char* cmd_line, JobsList* jobs);
   virtual ~JobsCommand() {}
   void execute() override;
 };
+
 
 class ForegroundCommand : public BuiltInCommand {
  // TODO: Add your data members

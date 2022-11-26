@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <iomanip>
 #include "Commands.h"
-//nlalvdknvskdnvksn shalom
+
 using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
@@ -98,9 +98,29 @@ void ChangeDirCommand::execute() {
         std::cerr << "smash error: cd: too many arguments" << std::endl;
         return;
     }
+}
 
+chpromptCommand::chpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line),prompt("smash"){
+  if( getNumofArg()<=1) {
+    new_prompt=this->prompt;
+  }else{
+    new_prompt=this->arg[1];
+  }
+}
 
+pwdCommand::pwdCommand(const char* cmd_line):BuiltInCommand(cmd_line){}
+void pwdCommand::execute()
+{
+  char buf[COMMAND_ARGS_MAX_LENGTH];
+  getcwd(buf,sizeof(buf));
+  std::<<cout<<buf<<std::endl;
+}
 
+JobsCommand::JobsCommand(const char* cmd_line , JobsList* job_list):BuiltInCommand(cmd_line),job_list(job_list){}
+
+void JobsCommand::execute()
+{
+  this->job_list->printJobsList();
 }
 
 SmallShell::SmallShell() {

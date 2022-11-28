@@ -10,6 +10,7 @@
 using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
+enum SpecialCmd {kRedirection =1, kPipe =2};
 
 #if 0
 #define FUNC_ENTRY()  \
@@ -77,6 +78,96 @@ void _removeBackgroundSign(char* cmd_line) {
   cmd_line[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
 }
 
+
+int pipeorredirection (const char* cmd_line)
+{
+    string cmd_str(cmd_line);
+    size_t check = cmd_str.npos;
+    if ((cmd_str.find(">>") != check) || (cmd_str.find(">") != check))
+        return kRedirection;
+    if ((cmd_str.find("|&") != check) || (cmd_str.find("|") != check))
+        return kPipe;
+    return 0;
+}
+
+SmallShell::SmallShell() : shel_Pid(getpid())
+{
+    this->shell_prev_dir = nullptr;
+    this->curr_external_cmd = nullptr;
+    this->current_prompt = "smash";
+    this->fore_pid = -1;
+    this->jobs_list =new JobsList();
+
+    Command::current_shell =this; //???
+}
+
+const int SmallShell::getShellpid() {
+    return this->shell_pid;
+}
+
+void SmallShell::setForePid(int new_pid)
+{
+    this->fore_pid = new_pid;
+}
+
+void SmallShell::setCurrExternal(ExternalCommand* new_cmd)
+{
+    this->curr_external_cmd = new_cmd;
+}
+
+int SmallShell::getForePid(){
+    return forepid;
+}
+
+ExternalCommand *SmallShell::getCurrExternalCmd()
+{
+    return curr_external_cmd;
+}
+
+SmallShell::~SmallShell() {
+    delete this->jobs_list;
+    delete [] this->shell_prev_dir
+}
+
+Command* SmallShell::CreateCommand(const char *cmd_line) {
+    string cmd_s = _trim(string(cmd_line));
+    string first_word =cmd_s.substr(0, cmd_s.find_first_of(" \n"));
+    if (pipeorredirection(cmd_line) == kRedirection){
+        return new RedirectionCommand(cmd_line);}
+   else if  (pipeorredirection(cmd_line) == kPipe){
+        return new PipeCommand(cmd_line);}
+   else if (pipeorredirection(cmd_line) == 0)
+    {
+        if (first_word.compare("chprompt") == 0)
+            return new chpromptCommand(cmd_line);
+        if (first_word.compare("showpid") == 0)
+            return new ShowPidCommand(cmd_line);
+        if (first_word.compare("pwd") == 0)
+            return new GetCurrDirCommand(cmd_line);
+        if (first_word.compare("cd") == 0)
+        {
+            char** prev_dir_ptr = &(this->shell_prev_dir);
+            return new ChangeDirCommand(cmd_line);
+        }
+        if (first_word.compare("jobs") == 0)
+            return new JobsCommand(cmd_line, this->getJobsList());
+        if (first_word.compare("fg") == 0)
+            return new ForegroundCommand(cmd_line, this->getJobsList());
+        if (first_word.compare("bg") == 0)
+            return new ForegroundCommand(cmd_line, this->getJobsList());
+        if (first_word.compare("quit") == 0)
+            return new QuitCommand(cmd_line, this->getJobsList());
+        if (first_word.compare("kill") == 0)
+            return new ForegroundCommand(cmd_line, this->getJobsList());
+        return ExternalCommand(cmd_line);
+    }
+
+    return nullptr;
+}
+
+
+void SmallShell::re
+
 ShowPidCommand::ShowPidCommand(const char *cmd_line): BuiltInCommand(cmd_line){
 }
 
@@ -107,14 +198,14 @@ void ChangeDirCommand::execute() {
             std:cerr <<"smash error: cd: OLDPWD not set"<<std:endl;
             return;
         }
-        else if (chdir(prev_dir) != 0)
+        if (chdir(prev_dir) != 0)
         {
             std:cerr <<"smash error: cd: chdir failed"<<std:endl;
             delete [] current_prev;
             return;
         }
     }
-    else if (chdir(arg[1]) != 0)
+     if (chdir(arg[1]) != 0)
     {
         std:cerr <<"smash error: cd: chdir failed"<<std:endl;
         delete [] current_prev;

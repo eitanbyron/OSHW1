@@ -5,6 +5,9 @@
 #include <string>
 #include <unistd.h>
 
+#include <time.h>
+
+
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 using namespace std;
@@ -13,8 +16,8 @@ class SmallShell;
 class JobsList ;
 class Command {
 
-
-    static SmallShell* current_shell;
+  static SmallShell* current_shell;
+  char command_name[COMMAND_ARGS_MAX_LENGTH];
  public:  
   Command(const char* cmd_line);
   virtual ~Command();
@@ -24,6 +27,7 @@ class Command {
   // TODO: Add your extra methods if needed
   vector<string> arg;
   int getNumofArg(){return arg.size();}
+  char* getCommandName(){return this->command_name;}
 };
 
 class BuiltInCommand : public Command {
@@ -86,21 +90,42 @@ public:
 class JobsList {
  public:
   class JobEntry {
-   // TODO: Add your data members
+
+  int job_id;
+  Command* command;
+  bool is_stopped;
+  time_t job_starting_time;
+  int procces_pid;
+  public:
+
+  JobEntry(int id, Command* command,bool is_stopped=false)
+          :job_id(id),command(command),is_stopped(is_stopped){}
+  int getJobId(){return this->job_id;}
+  bool isJobStopped(){return this->is_stopped;}
+  time_t getJobStartingTime(){return this->job_starting_time;}
+  int getProccesPid(){return this->procces_pid;}
+  Command* getCommand(){return this->command;}
+  void setJobStatus(bool status){this->is_stopped=status;}
+  void stopJob();
+  void continueJob();
   };
  // TODO: Add your data members
+ private:
+  vector<JobEntry*> jobs_list;
+
  public:
   JobsList();
   ~JobsList();
   void addJob(Command* cmd, bool isStopped = false);
   void printJobsList();
   void killAllJobs();
-  void removeFinishedJobs();
+  void removeFinishedJobs();// to be done
   JobEntry * getJobById(int jobId);
-  void removeJobById(int jobId);
-  JobEntry * getLastJob(int* lastJobId);
-  JobEntry *getLastStoppedJob(int *jobId);
+  void removeJobById(int jobId);// to be done
+  JobEntry * getLastJob(int* lastJobId);// to be done
+  JobEntry *getLastStoppedJob(int *jobId);// to be done
   // TODO: Add extra methods or modify exisitng ones as needed
+  vector<JobEntry*> getJobList(){return this->jobs_list;}
 };
 
 
@@ -131,7 +156,7 @@ class pwdCommand : public BuiltInCommand {
 
 class JobsCommand : public BuiltInCommand {
  // TODO: Add your data members
-  JobList *job_list;
+  JobsList *job_list;
  public:
   JobsCommand(const char* cmd_line, JobsList* jobs);
   virtual ~JobsCommand() {}

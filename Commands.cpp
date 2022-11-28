@@ -208,6 +208,100 @@ void BackgroundCommand::execute(){
   
 }
 
+//*************************JobsList implementation******************************///
+JobsList::JobEntry::JobEntry(int id, Command* command,bool is_stopped=false):job_id(id),command(command),is_stopped(is_stopped){}
+  
+void JobsList::JobEntry::stopJob()
+{
+  this->setJobStatus(true);
+}
+
+void JobsList::JobEntry::continueJob()
+{
+  this->setJobStatus(false);
+}
+
+
+void JobsList::addJob(Command* cmd, bool isStopped = false)
+{
+  removeFinishedJobs();
+  int new_job_id=0;
+  vector<JobEntry>* job_list_to_update=this->getJobList();
+  if(job_list_to_update->empty())
+  {
+    new_job_id=1;
+  }else{
+    int last_job_id=job_list_to_update->rbegin()->getJobId();
+    new_job_id=last_job_id+1;
+  }
+  JobsList::JobEntry* new_job= new JobsList::JobEntry(new_job_id,cmd,isStopped);
+  job_list_to_update->push_back(new_job);
+}
+
+void JobsList::killAllJobs()
+{
+  vector<JobEntry>::iterator job_to_kill;
+  vector<JobEntry>* job_list_to_kill=this->getJobList();
+
+  for(job_to_kill=job_list_to_kill->begin()  ; job_to_kill!=job_list_to_kill->end() ;   job_to_kill++)
+  {
+    if(kill(job_to_kill->getProccesPid(),SIGKILL)==-1)
+    {
+      char kill_err[]="smash error: kill failed";
+      perror(kill_err);
+      return;
+    }
+  }
+}
+
+void JobsList::removeFinishedJobs()
+{
+
+}
+
+JobsList::JobEntry* JobsList::getJobById(int jobId)
+{
+  removeFinishedJobs();
+  JobEntry* to_return;
+  vector<JobEntry>::iterator curr=this->getJobList().begin();
+  while (curr!=this->getJobList().end())
+  {
+    int curr_id=curr->getJobId();
+    if(curr_id==jobId)
+    {
+      to_return=&curr;
+      return to_return;
+    }
+    curr++
+  }
+  return to_return;
+}
+
+
+void JobsList::printJobsList() 
+{
+  removeFinishedJobs();
+  vector<JobEntry>* job_list_to_print=this->getJobList();
+
+  vector<JobEntry>::iterator current_job=job_list_to_print->begin();
+  //iteration over all the jobs list
+  for(current_job  ; current_job != job_list_to_print->end(); current_job++)
+  {
+    
+    time_t time_diffrential=difftime(time(nullptr),current_job->getJobStartingTime());
+    if(!(current_job->isJobStopped()))
+    {
+      count<<"["<<current_job->getJobId()<<"] "<<current_job->getCommand()->getCommandName()<<" : "
+            <<current_job->getJobId()<<" "<<time_diffrential<<" secs"<<endl;
+    }else{
+      cout<<"["<<current_job->getJobId()<<"] "<<current_job->getCommand()->getCommandName()<<" : "
+            <<current_job->getJobId()<<" "<<time_diffrential<<" secs"<<" (stopped)"<<endl;
+    }
+  }
+}
+
+
+
 
 SmallShell::SmallShell() {
 // TODO: add your implementation

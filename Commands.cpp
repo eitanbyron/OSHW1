@@ -11,6 +11,7 @@ using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 enum SpecialCmd {kRedirection =1, kPipe =2};
+enum JobState {kForeground, kBackground};
 
 #if 0
 #define FUNC_ENTRY()  \
@@ -166,7 +167,35 @@ Command* SmallShell::CreateCommand(const char *cmd_line) {
 }
 
 
-void SmallShell::re
+void SmallShell::resume(int job_id, JobState state)
+{
+    this->jobs_list->removeFinishedJobs();
+    JobsList::JobEntry* job = jobs_list->getJob(job_id);
+    if (job_id == -1)
+    {
+        if (state == kForeground)
+            job = this->jobs_list->getLastJob(&job_id);
+        if (state == kBackground)
+            job = this->jobs_list->getLastStoppedJob(&job_id);
+    }
+    if (job != nullptr)
+    {
+        if (state == kForeground)
+        {
+            int wait_status;
+            this->set
+
+
+
+
+        }
+
+
+
+    }
+
+
+}
 
 ShowPidCommand::ShowPidCommand(const char *cmd_line): BuiltInCommand(cmd_line){
 }
@@ -240,7 +269,7 @@ ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobs) : Bui
 }
 
 void ForegroundCommand::execute() {
-    this->current_shell->resume(job_id,1); //resume implementation??
+    this->current_shell->resume(job_id,kForeground); //resume implementation??
 }
 
 QuitCommand::QuitCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line){

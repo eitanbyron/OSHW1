@@ -1,0 +1,3 @@
+C:/Users/BBERON/OSHW1/cmake-build-debug/CMakeFiles/skeleton_smash.dir
+C:/Users/BBERON/OSHW1/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/BBERON/OSHW1/cmake-build-debug/CMakeFiles/rebuild_cache.dir

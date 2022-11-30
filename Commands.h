@@ -223,7 +223,7 @@ class KillCommand : public BuiltInCommand {
 
 class SmallShell {
 private:
-    std::string prompt_message_;
+    std::string prompt_message_ = "smash";
     const pid_t shell_pid_;
     pid_t fore_pid_;
     JobsList* jobs_list_;
@@ -242,16 +242,13 @@ public:
     }
     ~SmallShell();
     void executeCommand(const char* cmd_line);
-    // TODO: add extra methods as needed
+
 
     void setMessage(std::string new_message);
     std::string getMessage();
     const pid_t getShellPid();
     void setForePid(pid_t new_pid);
     JobsList* getJobsList();
-
-
-
 };
 
 #endif //SMASH_COMMAND_H_

@@ -78,20 +78,37 @@ void _removeBackgroundSign(char* cmd_line) {
   cmd_line[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
 }
 
+//*************************Command implementation******************************///
 
-CmdType checkCommandType (const char* cmd_line)
-{
-    string cmd_str(cmd_line);
-    size_t check = cmd_str.npos;
-    if ((cmd_str.find(">>") != check) || (cmd_str.find(">") != check))
-        return kRedirection;
-    if ((cmd_str.find("|&") != check) || (cmd_str.find("|") != check))
-        return kPipe;
-    return kOrdinary;
+void Command::setArgsNum(int num) {
+    this->args_num = num;
+}
+
+int Command::getNumofArg() {
+    return this->args_num;
+}
+
+char* Command::getSpecificArg(int arg_appearance) {
+    if (arg_appearance > args_num -1)
+        return nullptr;
+    return this->args[arg_appearance];
+}
+
+void Command::setArgsValues(char **args_arr) {
+    if (!args_arr)
+        return;
+    for (int i = 0; i<COMMAND_MAX_ARGS; i++)
+    {
+        this->args[i] = args_arr[i];
+    }
 }
 
 
 
+
+
+
+//*************************BuiltInCommand implementation******************************///
 
 ChpromptCommand::ChpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line),prompt("smash"){
   if( getNumofArg()<=1) {
@@ -315,6 +332,17 @@ SmallShell::~SmallShell() {
     delete this->jobs_list_;
 }
 
+CmdType checkCommandType (const char* cmd_line)
+{
+    string cmd_str(cmd_line);
+    size_t check = cmd_str.npos;
+    if ((cmd_str.find(">>") != check) || (cmd_str.find(">") != check))
+        return kRedirection;
+    if ((cmd_str.find("|&") != check) || (cmd_str.find("|") != check))
+        return kPipe;
+    return kOrdinary;
+}
+
 /**
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
 */
@@ -350,7 +378,7 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
                 return new KillCommand(cmd_line, this->getJobsList());
             if (first_word == "timeout")
                 return new TimeoutCommand(cmd_line);
-            break;
+            return new ExternalCommand(cmd_line);
         }
         case kPipe:
             return new RedirectionCommand(cmd_line);

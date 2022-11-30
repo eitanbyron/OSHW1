@@ -19,6 +19,8 @@ class JobsList ;
 class Command {
 
   static SmallShell* current_shell;
+  char* args[COMMAND_MAX_ARGS];
+  int args_num;
   char command_name[COMMAND_ARGS_MAX_LENGTH];
  public:  
   Command(const char* cmd_line);
@@ -26,10 +28,13 @@ class Command {
   virtual void execute() = 0;
   //virtual void prepare();
   //virtual void cleanup();
-  // TODO: Add your extra methods if needed
-  char** args;
-  int getNumofArg(){return args.size();}
+
+
   char* getCommandName(){return this->command_name;}
+  void setArgsValues(char** args);
+  void setArgsNum(int num);
+  int getNumofArg();
+  char* getSpecificArg (int arg_appearance);
 };
 
 class BuiltInCommand : public Command {

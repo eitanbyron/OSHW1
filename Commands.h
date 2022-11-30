@@ -222,6 +222,7 @@ class KillCommand : public BuiltInCommand {
 class SmallShell {
 private:
   SmallShell();
+  std::string prompt_message_;
 
   const int smashPid;
  public:

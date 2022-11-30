@@ -320,6 +320,8 @@ SmallShell::~SmallShell() {
 */
 Command * SmallShell::CreateCommand(const char* cmd_line) {
     char* args[COMMAND_MAX_ARGS];
+    for(int i=0; i<COMMAND_MAX_ARGS; i++)
+        args[i] = nullptr;
     int args_num = _parseCommandLine(cmd_line, args);
     if (args[0] == nullptr)
         return nullptr;
@@ -346,8 +348,6 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
                 return new QuitCommand(cmd_line, this->getJobsList());
             if (first_word == "kill")
                 return new KillCommand(cmd_line, this->getJobsList());
-            if (first_word == "kill")
-                return new KillCommand(cmd_line, this->getJobsList());
             if (first_word == "timeout")
                 return new TimeoutCommand(cmd_line);
             break;
@@ -361,9 +361,8 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
 }
 
 void SmallShell::executeCommand(const char *cmd_line) {
-  // TODO: Add your implementation here
-  // for example:
-  // Command* cmd = CreateCommand(cmd_line);
-  // cmd->execute();
-  // Please note that you must fork smash process for some commands (e.g., external commands....)
+  Command* cmd = CreateCommand(cmd_line);
+
+  if (cmd)
+      cmd->execute();
 }

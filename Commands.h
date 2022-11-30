@@ -27,7 +27,7 @@ class Command {
   //virtual void prepare();
   //virtual void cleanup();
   // TODO: Add your extra methods if needed
-  vector<string> args;
+  char** args;
   int getNumofArg(){return args.size();}
   char* getCommandName(){return this->command_name;}
 };

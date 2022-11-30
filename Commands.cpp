@@ -322,7 +322,7 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
     switch (checkCommandType(cmd_line)){
         case kOrdinary:
             if (first_word.compare("chprompt") == 0) {
-                return new Ch(cmd_line);
+                return new ChpromptCommand(cmd_line);
             }
             if (first_word.compare("showpid") == 0)
                 return new ShowPidCommand(cmd_line);

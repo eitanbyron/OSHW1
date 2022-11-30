@@ -133,7 +133,7 @@ class JobsList {
 int JobsList::last_job_id=0;
 
 //**********************built in commands***************************************//
-class chpromptCommand : public BuiltInCommand {
+class ChpromptCommand : public BuiltInCommand {
  // TODO: Add your data members
  string prompt;
  string new_prompt;

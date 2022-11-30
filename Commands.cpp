@@ -10,7 +10,7 @@
 using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
-enum SpecialCmd {kRedirection =1, kPipe =2};
+enum CmdType {kOrdinary , kRedirection, kPipe};
 
 #if 0
 #define FUNC_ENTRY()  \
@@ -79,7 +79,7 @@ void _removeBackgroundSign(char* cmd_line) {
 }
 
 
-int pipeorredirection (const char* cmd_line)
+CmdType checkCommandType (const char* cmd_line)
 {
     string cmd_str(cmd_line);
     size_t check = cmd_str.npos;
@@ -87,7 +87,7 @@ int pipeorredirection (const char* cmd_line)
         return kRedirection;
     if ((cmd_str.find("|&") != check) || (cmd_str.find("|") != check))
         return kPipe;
-    return 0;
+    return kOrdinary;
 }
 
 
@@ -300,7 +300,6 @@ JobsList* SmallShell::getJobsList() {
 }
 
 
-
 SmallShell::SmallShell(): shell_pid_(getpid()) {
     this->fore_pid_=-1;
     this->jobs_list_ = new JobsList();
@@ -315,23 +314,25 @@ SmallShell::~SmallShell() {
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
 */
 Command * SmallShell::CreateCommand(const char* cmd_line) {
-	// For example:
-/*
-  string cmd_s = _trim(string(cmd_line));
-  string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
+    char* args[COMMAND_MAX_ARGS];
+    int args_num = _parseCommandLine(cmd_line, args);
+    if (args[0] == nullptr)
+        return nullptr;
+    string first_word = args[0];
+    switch (checkCommandType(cmd_line)){
+        case kOrdinary:
+            if (first_word.compare("chprompt") == 0) {
+                return new Ch(cmd_line);
+            }
+            if (first_word.compare("showpid") == 0)
+                return new ShowPidCommand(cmd_line);
+            if (first_word.compare("pwd") == 0)
+                return new GetCurrDirCommand(cmd_line);
+            if (first_word.compare("pwd") == 0)
+                return new GetCurrDirCommand(cmd_line);
+            break;
+    }
 
-  if (firstWord.compare("pwd") == 0) {
-    return new GetCurrDirCommand(cmd_line);
-  }
-  else if (firstWord.compare("showpid") == 0) {
-    return new ShowPidCommand(cmd_line);
-  }
-  else if ...
-  .....
-  else {
-    return new ExternalCommand(cmd_line);
-  }
-  */
   return nullptr;
 }
 

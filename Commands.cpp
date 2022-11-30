@@ -299,10 +299,15 @@ JobsList* SmallShell::getJobsList() {
     return this->jobs_list_;
 }
 
+char* SmallShell::getPrevDir() {
+    return this->shell_prev_dir;
+}
+
 
 SmallShell::SmallShell(): shell_pid_(getpid()) {
     this->fore_pid_=-1;
     this->jobs_list_ = new JobsList();
+    this->shell_prev_dir = nullptr;
 
 }
 
@@ -328,7 +333,8 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
             if (first_word == "pwd")
                 return new GetCurrDirCommand(cmd_line);
             if (first_word == "cd") {
-
+                char** prev_dir_pointer = &(this->shell_prev_dir);
+                return new ChangeDirCommand(cmd_line, prev_dir_pointer);
             }
             if (first_word == "jobs")
                 return new JobsCommand(cmd_line, this->getJobsList());

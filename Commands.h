@@ -65,6 +65,7 @@ class RedirectionCommand : public Command {
 
 class ChangeDirCommand : public BuiltInCommand {
     char** last_directory;
+public:
   ChangeDirCommand(const char* cmd_line, char** plastPwd);
   virtual ~ChangeDirCommand() {}
   void execute() override;
@@ -250,7 +251,7 @@ public:
     const pid_t getShellPid();
     void setForePid(pid_t new_pid);
     JobsList* getJobsList();
-
+    char* getPrevDir();
 };
 
 #endif //SMASH_COMMAND_H_

@@ -320,7 +320,7 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
         return nullptr;
     string first_word = args[0];
     switch (checkCommandType(cmd_line)){
-        case kOrdinary:
+        case kOrdinary: {
             if (first_word == "chprompt")
                 return new ChpromptCommand(cmd_line);
             if (first_word == "showpid")
@@ -334,9 +334,26 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
                 return new JobsCommand(cmd_line, this->getJobsList());
             if (first_word == "fg")
                 return new ForegroundCommand(cmd_line, this->getJobsList());
-            if (first_word.compare("jobs") == 0)
-                return new JobsCommand(cmd_line, this->getJobsList());
+            if (first_word == "bg")
+                return new BackgroundCommand(cmd_line, this->getJobsList());
+            if (first_word == "quit")
+                return new QuitCommand(cmd_line, this->getJobsList());
+            if (first_word == "kill")
+                return new KillCommand(cmd_line, this->getJobsList());
+            if (first_word == "kill")
+                return new KillCommand(cmd_line, this->getJobsList());
+            if (first_word == "timeout")
+                return new TimeoutCommand(cmd_line);
             break;
+        }
+        case kPipe:{
+            return new RedirectionCommand(cmd_line);
+            break;
+        }
+        case kRedirection: {
+            return new PipeCommand(cmd_line);
+            break;
+        }
     }
 
   return nullptr;

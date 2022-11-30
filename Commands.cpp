@@ -11,7 +11,6 @@ using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 enum SpecialCmd {kRedirection =1, kPipe =2};
-enum JobState {kForeground, kBackground};
 
 #if 0
 #define FUNC_ENTRY()  \

@@ -321,15 +321,21 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
     string first_word = args[0];
     switch (checkCommandType(cmd_line)){
         case kOrdinary:
-            if (first_word.compare("chprompt") == 0) {
+            if (first_word == "chprompt")
                 return new ChpromptCommand(cmd_line);
-            }
-            if (first_word.compare("showpid") == 0)
+            if (first_word == "showpid")
                 return new ShowPidCommand(cmd_line);
-            if (first_word.compare("pwd") == 0)
+            if (first_word == "pwd")
                 return new GetCurrDirCommand(cmd_line);
-            if (first_word.compare("pwd") == 0)
-                return new GetCurrDirCommand(cmd_line);
+            if (first_word == "cd") {
+
+            }
+            if (first_word == "jobs")
+                return new JobsCommand(cmd_line, this->getJobsList());
+            if (first_word == "fg")
+                return new ForegroundCommand(cmd_line, this->getJobsList());
+            if (first_word.compare("jobs") == 0)
+                return new JobsCommand(cmd_line, this->getJobsList());
             break;
     }
 

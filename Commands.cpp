@@ -93,7 +93,7 @@ CmdType checkCommandType (const char* cmd_line)
 
 
 
-chpromptCommand::chpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line),prompt("smash"){
+ChpromptCommand::ChpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line),prompt("smash"){
   if( getNumofArg()<=1) {
     new_prompt=this->prompt;
   }else{
@@ -355,7 +355,6 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
             break;
         }
     }
-
   return nullptr;
 }
 

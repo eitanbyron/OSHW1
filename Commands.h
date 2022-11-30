@@ -227,6 +227,7 @@ private:
     const pid_t shell_pid_;
     pid_t fore_pid_;
     JobsList* jobs_list_;
+    char* shell_prev_dir;
 
 
     SmallShell();
@@ -249,6 +250,7 @@ public:
     const pid_t getShellPid();
     void setForePid(pid_t new_pid);
     JobsList* getJobsList();
+
 };
 
 #endif //SMASH_COMMAND_H_

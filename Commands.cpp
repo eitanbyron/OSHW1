@@ -352,14 +352,10 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
                 return new TimeoutCommand(cmd_line);
             break;
         }
-        case kPipe:{
+        case kPipe:
             return new RedirectionCommand(cmd_line);
-            break;
-        }
-        case kRedirection: {
+        case kRedirection:
             return new PipeCommand(cmd_line);
-            break;
-        }
     }
   return nullptr;
 }

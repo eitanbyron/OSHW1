@@ -25,8 +25,8 @@ class Command {
   //virtual void prepare();
   //virtual void cleanup();
   // TODO: Add your extra methods if needed
-  vector<string> arg;
-  int getNumofArg(){return arg.size();}
+  vector<string> args;
+  int getNumofArg(){return args.size();}
   char* getCommandName(){return this->command_name;}
 };
 
@@ -122,12 +122,13 @@ class JobsList {
   void removeFinishedJobs();// to be done
   JobEntry * getJobById(int jobId);
   void removeJobById(int jobId);// to be done
-  JobEntry * getLastJob(int* lastJobId);// to be done
-  JobEntry *getLastStoppedJob(int *jobId);// to be done
+  JobEntry * getLastJob(int* lastJobId);
+  JobEntry *getLastStoppedJob(int *jobId);
   // TODO: Add extra methods or modify exisitng ones as needed
   vector<JobEntry*> getJobList(){return this->jobs_list;}
+  static int last_job_id;
 };
-
+int JobsList::last_job_id=0;
 
 //**********************built in commands***************************************//
 class chpromptCommand : public BuiltInCommand {

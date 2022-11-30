@@ -133,6 +133,7 @@ SmallShell::~SmallShell() {
 Command* SmallShell::CreateCommand(const char *cmd_line) {
     string cmd_s = _trim(string(cmd_line));
     string first_word =cmd_s.substr(0, cmd_s.find_first_of(" \n"));
+    //need to add implemation to args in class command
     if (pipeorredirection(cmd_line) == kRedirection){
         return new RedirectionCommand(cmd_line);}
    else if  (pipeorredirection(cmd_line) == kPipe){
@@ -185,15 +186,8 @@ void SmallShell::resume(int job_id, JobState state)
             int wait_status;
             this->set
 
-
-
-
         }
-
-
-
     }
-
 
 }
 
@@ -220,7 +214,7 @@ void ChangeDirCommand::execute() {
     if (args_num == 1)
         return;
     char* current_prev = get_current_dir();  //get_current_dir() implementation??
-    if (arg[1] == "-") {
+    if (args[1] == "-") {
         char *prev_dir = *(this->last_directory);
         if (!prev_dir)
         {
@@ -234,7 +228,7 @@ void ChangeDirCommand::execute() {
             return;
         }
     }
-     if (chdir(arg[1]) != 0)
+     if (chdir(args[1]) != 0)
     {
         std:cerr <<"smash error: cd: chdir failed"<<std:endl;
         delete [] current_prev;
@@ -254,7 +248,7 @@ ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobs) : Bui
         this->job_id = -1;  //jobid implementation??
     else if (getNumofArg() ==2)
     {
-        int temp = stoi(arg[1]);
+        int temp = stoi(args[1]);
         job_id = temp;
         if (this->jobid <= 0) {
             std:cerr << "smash error: fg: job-id " + to_string(job_id) + " does not exist" << std:endl;
@@ -281,7 +275,7 @@ void QuitCommand::execute() {
     bool  kill_all =false;
     for (int i = 0; i < args_num; i++)
     {
-        if (arg[i] == "kill")
+        if (args[i] == "kill")
         {
             kill_all = true;
             break;
@@ -303,7 +297,7 @@ chpromptCommand::chpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line)
   if( getNumofArg()<=1) {
     new_prompt=this->prompt;
   }else{
-    new_prompt=this->arg[1];
+    new_prompt=this->args[1];
   }
 }
 
@@ -324,8 +318,40 @@ void JobsCommand::execute()
 
 BackgroundCommand::BackgroundCommand(const_cast* cmd_line , JobsList* job_list):BuiltInCommand(cmd_line),job_list(job_list){}
 
-void BackgroundCommand::execute(){
+void BackgroundCommand::execute()
+{
+
+  if (getNumofArg() > 2)
+  {
+    // TODO: handle errors
+  }
+
+  int job_id = -1;
+  JobsList::JobEntry *job_entry = new JobsList::JobEntry(0, nullptr, false);
   
+  if (getNumofArg() == 1)
+  {
+    job_entry = job_list->getLastStoppedJob(&job_id);
+    if (job_entry->isStopped())
+    {
+      // TODO: print jobentry->cmdLine
+      //TODO: resume job entry
+    }
+
+  }
+  else if (getNumofArg() == 2)
+  {
+    job_entry = job_list->getJobById(stoi(args[1]));
+    
+    if (!job_entry)
+    {
+      // TODO: print error message - job does not exist
+
+    }
+  }
+  
+
+
 }
 
 //*************************JobsList implementation******************************///
@@ -350,11 +376,13 @@ void JobsList::addJob(Command* cmd, bool isStopped = false)
   if(job_list_to_update->empty())
   {
     new_job_id=1;
+    this->last_job_id=new_job_id;
   }else{
     int last_job_id=job_list_to_update->rbegin()->getJobId();
     new_job_id=last_job_id+1;
   }
-  JobsList::JobEntry* new_job= new JobsList::JobEntry(new_job_id,cmd,isStopped);
+  this->last_job_id++;
+  JobsList::JobEntry* new_job= new JobsList::JobEntry(this->last_job_id,cmd,isStopped);
   job_list_to_update->push_back(new_job);
 }
 
@@ -395,6 +423,34 @@ JobsList::JobEntry* JobsList::getJobById(int jobId)
     curr++
   }
   return to_return;
+}
+
+JobsList::JobEntry *JobsList::getLastStoppedJob(int *jobId)
+{
+  JobEntry* last_stopped_job=nullptr;
+  vector<JobEntry>::iterator curr=this->getJobList().begin();
+  vector<JobEntry>::iterator list_end=this->getJobList().end();
+  while(curr!=list_end)
+  {
+    bool is_stopped=curr->isJobStopped();
+    if(is_stopped)
+    {
+      jobId=curr->getJobId();
+      last_stopped_job=&*(curr);
+    }
+    curr++;
+  }
+  return last_stopped_job;
+}
+
+JobsList::JobEntry *JobsList::getLastJob(int *lastJobId)
+{
+  if(!(this->getJobList()))
+  {
+    return nullptr;
+  }
+  lastJobId=this->getJobList().back()->getJobId();//need to check type
+  return this->getJobList().back();//need to check return value
 }
 
 

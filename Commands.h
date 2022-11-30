@@ -140,7 +140,7 @@ class ChpromptCommand : public BuiltInCommand {
  public:
   ChpromptCommand(const char* cmd_line);
   virtual ~ChpromptCommand() {}
-  void chpromptCommand() override;
+  void execute() override;
 };
 
 class ShowPidCommand : public BuiltInCommand {

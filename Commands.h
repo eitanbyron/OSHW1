@@ -14,7 +14,7 @@ using namespace std;
 
 class SmallShell;
 class JobsList ;
-class Command {
+class Command {                      // tp complete! ctor dtor
 
   static SmallShell* current_shell;
   char command_name[COMMAND_ARGS_MAX_LENGTH];

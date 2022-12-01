@@ -348,6 +348,7 @@ void BackgroundCommand::execute()
       // TODO: print error message - job does not exist
 
     }
+    
   }
   
 

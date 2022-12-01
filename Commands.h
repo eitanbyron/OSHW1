@@ -40,34 +40,6 @@ class Command {
 
 };
 
-
-class ExternalCommand : public Command {
- public:
-  ExternalCommand(const char* cmd_line);
-  virtual ~ExternalCommand() {}
-  void execute() override;
-};
-
-class PipeCommand : public Command {
-  // TODO: Add your data members
- public:
-  PipeCommand(const char* cmd_line);
-  virtual ~PipeCommand() {}
-  void execute() override;
-};
-
-class RedirectionCommand : public Command {
- // TODO: Add your data members
- public:
-  explicit RedirectionCommand(const char* cmd_line);
-  virtual ~RedirectionCommand() {}
-  void execute() override;
-  //void prepare() override;
-  //void cleanup() override;
-};
-
-
-
 //**********************built-in commands***************************************//
 class BuiltInCommand : public Command {
 public:
@@ -97,6 +69,14 @@ class pwdCommand : public BuiltInCommand {
 public:
     pwdCommand(const char* cmd_line);
     virtual ~pwdCommand() {}
+    void execute() override;
+};
+
+class ChangeDirCommand : public BuiltInCommand {
+    char** last_directory;
+public:
+    ChangeDirCommand(const char* cmd_line, char** plastPwd);
+    virtual ~ChangeDirCommand() {}
     void execute() override;
 };
 
@@ -164,13 +144,7 @@ public:
     void execute() override;
 };
 
-class ChangeDirCommand : public BuiltInCommand {
-    char** last_directory;
-public:
-    ChangeDirCommand(const char* cmd_line, char** plastPwd);
-    virtual ~ChangeDirCommand() {}
-    void execute() override;
-};
+
 
 class GetCurrDirCommand : public BuiltInCommand {
 public:
@@ -178,6 +152,39 @@ public:
     virtual ~GetCurrDirCommand() {}
     void execute() override;
 };
+
+class ExternalCommand : public Command {
+ public:
+  ExternalCommand(const char* cmd_line);
+  virtual ~ExternalCommand() {}
+  void execute() override;
+};
+
+class PipeCommand : public Command {
+  // TODO: Add your data members
+ public:
+  PipeCommand(const char* cmd_line);
+  virtual ~PipeCommand() {}
+  void execute() override;
+};
+
+class RedirectionCommand : public Command {
+ // TODO: Add your data members
+ public:
+  explicit RedirectionCommand(const char* cmd_line);
+  virtual ~RedirectionCommand() {}
+  void execute() override;
+  //void prepare() override;
+  //void cleanup() override;
+};
+
+
+
+
+
+
+
+
 
 class JobsList;
 class QuitCommand : public BuiltInCommand {

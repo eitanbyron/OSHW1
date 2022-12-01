@@ -400,7 +400,7 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
             if ((first_word == "pwd") || (first_word == "pwd&"))
                 return new GetCurrDirCommand(cmd_line);
             if ((first_word == "cd") || (first_word == "cd&")) {
-                char** prev_dir_pointer = &(this->shell_prev_dir);
+                char** prev_dir_pointer = &(this->shell_prev_dir_);
                 return new ChangeDirCommand(cmd_line, prev_dir_pointer);
             }
             if ((first_word == "jobs") || (first_word == "jobs&"))

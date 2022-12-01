@@ -163,12 +163,12 @@ ChpromptCommand::ChpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line)
   }
 }
 
-pwdCommand::pwdCommand(const char* cmd_line):BuiltInCommand(cmd_line){}
-void pwdCommand::execute()
+GetCurrDirCommand::GetCurrDirCommand(const char* cmd_line):BuiltInCommand(cmd_line){}
+void GetCurrDirCommand::execute()
 {
   char buf[COMMAND_ARGS_MAX_LENGTH];
   getcwd(buf,sizeof(buf));
-  std::<<cout<<buf<<std::endl;
+  std::cout<<buf<<std::endl;
 }
 
 JobsCommand::JobsCommand(const char* cmd_line , JobsList* job_list):BuiltInCommand(cmd_line),job_list(job_list){}

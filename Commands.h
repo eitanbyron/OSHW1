@@ -15,7 +15,8 @@ using namespace std;
 typedef int pid_t;
 
 class SmallShell;
-class JobsList ;
+class JobsList;
+
 class Command {
 
   static SmallShell* current_shell;
@@ -37,7 +38,6 @@ class Command {
   int getNumofArg();
   char* getSpecificArg (int arg_appearance);
   void changeSpecificArg (int arg_appearance, char* new_arg);
-
 };
 
 
@@ -130,7 +130,7 @@ public:
 };
 
 
-//**********************External and special commands***************************************//
+//**********************External and Special commands***************************************//
 
 class ExternalCommand : public Command {
  public:

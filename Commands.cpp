@@ -78,6 +78,17 @@ void _removeBackgroundSign(char* cmd_line) {
   cmd_line[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
 }
 
+CmdType checkCommandType (const char* cmd_line)
+{
+    string cmd_str(cmd_line);
+    size_t check = cmd_str.npos;
+    if ((cmd_str.find(">>") != check) || (cmd_str.find(">") != check))
+        return kRedirection;
+    if ((cmd_str.find("|&") != check) || (cmd_str.find("|") != check))
+        return kPipe;
+    return kOrdinary;
+}
+
 //*************************Command implementation******************************///
 
 void Command::setArgsNum(int num) {
@@ -104,19 +115,28 @@ void Command::setArgsValues(char **args_arr) {
 }
 
 Command::Command(const char *cmd_line) {
-    char* args[COMMAND_MAX_ARGS];
+
+    this->cmd_pid =-1;
     for(int i=0; i<COMMAND_MAX_ARGS; i++)
-        args[i] = nullptr;
+        this->args[i] = nullptr;
     this->args_num = _parseCommandLine(cmd_line, args); //parse return num of args or num -1?
-
-
-
+    this->cmd_pid =-1;
 }
 
 
 
 
 //*************************BuiltInCommand implementation******************************///
+BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line) {
+    if (_isBackgroundComamnd(cmd_line))
+    {
+
+
+
+
+    }
+}
+
 
 ChpromptCommand::ChpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line),prompt("smash"){
   if( getNumofArg()<=1) {
@@ -339,16 +359,6 @@ SmallShell::~SmallShell() {
     delete this->jobs_list_;
 }
 
-CmdType checkCommandType (const char* cmd_line)
-{
-    string cmd_str(cmd_line);
-    size_t check = cmd_str.npos;
-    if ((cmd_str.find(">>") != check) || (cmd_str.find(">") != check))
-        return kRedirection;
-    if ((cmd_str.find("|&") != check) || (cmd_str.find("|") != check))
-        return kPipe;
-    return kOrdinary;
-}
 
 /**
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
@@ -401,3 +411,4 @@ void SmallShell::executeCommand(const char *cmd_line) {
   if (cmd)
       cmd->execute();
 }
+

@@ -21,6 +21,7 @@ class Command {
   static SmallShell* current_shell;
   char* args[COMMAND_MAX_ARGS];
   int args_num;
+  pid_t cmd_pid;
   char command_name[COMMAND_ARGS_MAX_LENGTH];
  public:  
   Command(const char* cmd_line);
@@ -35,6 +36,7 @@ class Command {
   void setArgsNum(int num);
   int getNumofArg();
   char* getSpecificArg (int arg_appearance);
+
 };
 
 class BuiltInCommand : public Command {

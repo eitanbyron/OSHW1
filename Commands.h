@@ -25,6 +25,7 @@ class Command {
   pid_t cmd_pid_;
   bool is_background_ = false;
   char command_name_[COMMAND_ARGS_MAX_LENGTH];
+
  public:  
   Command(const char* cmd_line);
   virtual ~Command() = default;
@@ -36,6 +37,9 @@ class Command {
   char* getCommandName(){return this->command_name_;}
   int getNumofArg();
   char* getSpecificArg (int arg_appearance);
+  void connectShell(SmallShell* smash);
+  pid_t getShellPid();
+  void setPrevDir(char* new_prev_dir);
 };
 
 
@@ -93,7 +97,8 @@ public:
 
 
 class ForegroundCommand : public BuiltInCommand {
-    // TODO: Add your data members
+    JobsList* jobs_list;
+    int job_id;
 public:
     ForegroundCommand(const char* cmd_line, JobsList* jobs);
     virtual ~ForegroundCommand() {}
@@ -111,7 +116,7 @@ public:
 };
 
 class QuitCommand : public BuiltInCommand {
-// TODO: Add your data members
+    JobsList* jobs_list;
 public:
     QuitCommand(const char* cmd_line, JobsList* jobs);
     virtual ~QuitCommand() {}
@@ -262,6 +267,7 @@ public:
     void setForePid(pid_t new_pid);
     JobsList* getJobsList();
     char* getPrevDir();
+    void setPrevDir(char* new_prev_dir);
 };
 
 #endif //SMASH_COMMAND_H_

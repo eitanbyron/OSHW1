@@ -82,9 +82,9 @@ CmdType checkCommandType (const char* cmd_line)
 {
     string cmd_str(cmd_line);
     size_t check = cmd_str.npos;
-    if ((cmd_str.find(">>") != check) || (cmd_str.find(">") != check))
+    if ((cmd_str.find(">>") != check) || (cmd_str.find('>') != check))
         return kRedirection;
-    if ((cmd_str.find("|&") != check) || (cmd_str.find("|") != check))
+    if ((cmd_str.find("|&") != check) || (cmd_str.find('|') != check))
         return kPipe;
     return kOrdinary;
 }
@@ -99,6 +99,18 @@ char* Command::getSpecificArg(int arg_appearance) {
     if (arg_appearance > args_num_ -1)
         return nullptr;
     return this->args_[arg_appearance];
+}
+
+void Command::connectShell(SmallShell *smash) {
+    Command::current_shell = smash;
+}
+
+pid_t Command::getShellPid() {
+    return current_shell->getShellPid();
+}
+
+void Command::setPrevDir(char *new_prev_dir) {
+    this->current_shell->setPrevDir(new_prev_dir);
 }
 
 Command::Command(const char *cmd_line) {
@@ -119,9 +131,6 @@ Command::Command(const char *cmd_line) {
 }
 
 
-
-
-
 //*************************Built-in commands******************************///
 BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line){}
 
@@ -129,6 +138,95 @@ ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line){
 
 void ShowPidCommand::execute() {
     std::cout << "smash pid is " <<SmallShell::getInstance().getShellPid()<<std::endl;
+}
+
+ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **plastPwd) : BuiltInCommand(cmd_line) {
+    last_directory = plastPwd;
+}
+
+void ChangeDirCommand::execute() {
+    int args_num = this->getNumofArg();
+    if (args_num <= 1)
+        return;
+    if (args_num > 2)
+    {
+        std::cerr<<"smash error: cd: too many arguments"<<std::endl;
+        return;
+    }
+    char curr_dir[COMMAND_ARGS_MAX_LENGTH];
+    getcwd(curr_dir, sizeof(curr_dir)); //getcwd function from unistd.h
+    if (this->getSpecificArg(1) == "-") {
+        char *prev_dir = *(this->last_directory);
+        if (prev_dir == nullptr){
+            std::cerr<<"smash error: cd: OLDPWD not set"<<std::endl;
+            return;
+        }
+        else if (chdir(prev_dir) != 0) //chdir function from unistd.h
+        {    std::cerr<<"smash error: chdir failed"<<std::endl;
+            return;
+        }
+        }
+        else if (chdir(this->getSpecificArg(1)) != 0) {
+            std::cerr << "smash error: chdir failed" << std::endl;
+            return;
+        }
+
+    char* temp_prev_dir = SmallShell::getInstance().getPrevDir();
+    delete [] temp_prev_dir;
+    this->setPrevDir(curr_dir);
+}
+
+
+ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line) {
+    this->jobs_list = jobs;
+    int args_num = this->getNumofArg();
+    if (args_num == 1)
+        this-> job_id = -1;
+    else if (args_num == 2)
+    {
+        try {
+            this->job_id = stoi(this->getSpecificArg(1));
+            if (job_id <= 0)
+            {
+                std::cerr << "smash error: fg: job-id " << job_id << " does not exist" <<std::endl;
+            }
+        }
+        catch  (std::invalid_argument &e) {
+            std::cerr << "smash error: fg: invalid arguments" << std::endl;
+        }
+    }
+    else
+        std::cerr << "smash error: fg: invalid arguments" << std::endl;
+}
+
+
+void ForegroundCommand::execute() {
+
+}
+
+
+
+QuitCommand::QuitCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line) {
+    this->jobs_list = jobs;
+}
+
+void QuitCommand::execute() {
+    bool kill_all =false;
+    for (int i=0; i<this->getNumofArg(); i++)
+    {
+        if (this->getSpecificArg(i) == "kill"){
+            kill_all = true;
+            break;
+        }
+    }
+
+    if (kill_all)
+    {
+        jobs_list->removeFinishedJobs();
+        int jobs_num = jobs_list->getSize(); // TODO: getSize implementation
+        std::cout << "smash: sending SIGKILL signal to" <<jobs_num << "jobs:" <<std::endl;
+        jobs_list->killAllJobs();
+    }
 }
 
 
@@ -345,8 +443,13 @@ char* SmallShell::getPrevDir() {
     return this->shell_prev_dir_;
 }
 
+void SmallShell::setPrevDir(char *new_prev_dir) {
+    this->shell_prev_dir_=new_prev_dir;
+}
 
-SmallShell::SmallShell(): shell_pid_(getpid()) {
+
+SmallShell::SmallShell(): shell_pid_(getpid())  //getpid function from unistd.h
+{
     this->fore_pid_=-1;
     this->jobs_list_ = new JobsList();
     this->shell_prev_dir_ = nullptr;
@@ -355,6 +458,7 @@ SmallShell::SmallShell(): shell_pid_(getpid()) {
 SmallShell::~SmallShell() {
     delete this->jobs_list_;
 }
+
 
 
 /**
@@ -404,7 +508,7 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
 
 void SmallShell::executeCommand(const char *cmd_line) {
   Command* cmd = CreateCommand(cmd_line);
-
+  cmd->connectShell(this);
   if (cmd)
       cmd->execute();
 }

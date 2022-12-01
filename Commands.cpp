@@ -103,7 +103,15 @@ void Command::setArgsValues(char **args_arr) {
     }
 }
 
+Command::Command(const char *cmd_line) {
+    char* args[COMMAND_MAX_ARGS];
+    for(int i=0; i<COMMAND_MAX_ARGS; i++)
+        args[i] = nullptr;
+    this->args_num = _parseCommandLine(cmd_line, args); //parse return num of args or num -1?
 
+
+
+}
 
 
 
@@ -325,7 +333,6 @@ SmallShell::SmallShell(): shell_pid_(getpid()) {
     this->fore_pid_=-1;
     this->jobs_list_ = new JobsList();
     this->shell_prev_dir = nullptr;
-
 }
 
 SmallShell::~SmallShell() {
@@ -356,25 +363,25 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
     string first_word = args[0];
     switch (checkCommandType(cmd_line)){
         case kOrdinary: {
-            if (first_word == "chprompt")
+            if ((first_word == "chprompt") || (first_word == "chprompt&"))
                 return new ChpromptCommand(cmd_line);
-            if (first_word == "showpid")
+            if ((first_word == "showpid") || (first_word == "showpid&"))
                 return new ShowPidCommand(cmd_line);
-            if (first_word == "pwd")
+            if ((first_word == "pwd") || (first_word == "pwd&"))
                 return new GetCurrDirCommand(cmd_line);
-            if (first_word == "cd") {
+            if ((first_word == "cd") || (first_word == "cd&")) {
                 char** prev_dir_pointer = &(this->shell_prev_dir);
                 return new ChangeDirCommand(cmd_line, prev_dir_pointer);
             }
-            if (first_word == "jobs")
+            if ((first_word == "jobs") || (first_word == "jobs&"))
                 return new JobsCommand(cmd_line, this->getJobsList());
-            if (first_word == "fg")
+            if ((first_word == "fg") || (first_word == "fg&"))
                 return new ForegroundCommand(cmd_line, this->getJobsList());
-            if (first_word == "bg")
+            if ((first_word == "bg") || (first_word == "bg&"))
                 return new BackgroundCommand(cmd_line, this->getJobsList());
-            if (first_word == "quit")
+            if ((first_word == "quit") || (first_word == "quit&"))
                 return new QuitCommand(cmd_line, this->getJobsList());
-            if (first_word == "kill")
+            if ((first_word == "kill") || (first_word == "kill&"))
                 return new KillCommand(cmd_line, this->getJobsList());
             if (first_word == "timeout")
                 return new TimeoutCommand(cmd_line);

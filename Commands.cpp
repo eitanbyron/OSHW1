@@ -126,7 +126,7 @@ Command::Command(const char *cmd_line) {
 
 
 
-//*************************BuiltInCommand implementation******************************///
+//*************************Built-in commands******************************///
 BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line) {
     if (_isBackgroundComamnd(cmd_line))
     {

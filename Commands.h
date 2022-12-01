@@ -19,7 +19,7 @@ class JobsList;
 class Command {
 
   static SmallShell* current_shell;
-  char* args_[COMMAND_MAX_ARGS];
+  
   int args_num_;
   pid_t cmd_pid_;
   bool is_background_ = false;
@@ -33,10 +33,13 @@ class Command {
   //virtual void cleanup();
   char* getCommandName(){return this->command_name_;}
   int getNumofArg();
-  char* getSpecificArg (int arg_appearance);
+  //char* getSpecificArg (int arg_appearance);
   void connectShell(SmallShell* smash);
   pid_t getShellPid();
+  pid_t getProccesPid(); // to implement
   void setPrevDir(char* new_prev_dir);
+  char* args_[COMMAND_MAX_ARGS];
+  SmallShell* getSmallShell(){return this->current_shell;}
 };
 
 
@@ -51,7 +54,6 @@ public:
 class ChpromptCommand : public BuiltInCommand {
     // TODO: Add your data members
     string prompt;
-    string new_prompt;
 public:
     ChpromptCommand(const char* cmd_line);
     virtual ~ChpromptCommand() {}
@@ -196,6 +198,7 @@ class JobsList {
   bool is_stopped;
   time_t job_starting_time;
   int procces_pid;
+
   public:
 
   JobEntry(int id, Command* command,bool is_stopped=false)
@@ -205,7 +208,7 @@ class JobsList {
   time_t getJobStartingTime(){return this->job_starting_time;}
   int getProccesPid(){return this->procces_pid;}  // need to check pid init is done
 
-  void setProccesPid(){}  //need to add set to the procces id and to add get func for pid in command
+  void setProccesPid(){procces_pid=command->getProccesPid();}  //need to add set to the procces id and to add get func for pid in command
 
   Command* getCommand(){return this->command;}
   void setJobStatus(bool status){this->is_stopped=status;}

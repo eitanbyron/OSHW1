@@ -137,7 +137,7 @@ BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line){}
 ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line){}
 
 void ShowPidCommand::execute() {
-    std::cout << "smash pid is " <<SmallShell::getInstance().getShellPid()<<std::endl;
+    std::cout << "smash pid is " <<this->getShellPid()<<std::endl;
 }
 
 ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **plastPwd) : BuiltInCommand(cmd_line) {
@@ -162,7 +162,7 @@ void ChangeDirCommand::execute() {
             return;
         }
         else if (chdir(prev_dir) != 0) //chdir function from unistd.h
-        {    std::cerr<<"smash error: chdir failed"<<std::endl;
+        {    std::cerr<<"smash error: chdir failed"<<std::endl; // need to check if perror neccesry here
             return;
         }
         }
@@ -223,7 +223,7 @@ void QuitCommand::execute() {
     if (kill_all)
     {
         jobs_list->removeFinishedJobs();
-        int jobs_num = jobs_list->getSize(); // TODO: getSize implementation
+        int jobs_num = this->jobs_list->getJobList().size(); 
         std::cout << "smash: sending SIGKILL signal to" <<jobs_num << "jobs:" <<std::endl;
         jobs_list->killAllJobs();
     }
@@ -232,12 +232,16 @@ void QuitCommand::execute() {
 
 
 
-ChpromptCommand::ChpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line),prompt("smash"){
+ChpromptCommand::ChpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line),prompt("smash"){}
+
+void ChpromptCommand::execute()
+{
   if( getNumofArg()<=1) {
-    new_prompt=this->prompt;
+    prompt="smash";
   }else{
-    new_prompt=this->args_[1];
+    prompt=this->args_[1];
   }
+  getSmallShell()->setMessage(prompt);
 }
 
 GetCurrDirCommand::GetCurrDirCommand(const char* cmd_line):BuiltInCommand(cmd_line){}
@@ -389,8 +393,7 @@ void JobsList::killAllJobs()
   {
     if(kill(job_to_kill->getProccesPid(),SIGKILL)==-1)
     {
-      char kill_err[]="smash error: kill failed";
-      perror(kill_err);
+      perror("smash error: kill failed");
       return;
     }
   }
@@ -562,8 +565,10 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
 
 void SmallShell::executeCommand(const char *cmd_line) {
   Command* cmd = CreateCommand(cmd_line);
-  cmd->connectShell(this);
   if (cmd)
-      cmd->execute();
+  {
+    cmd->connectShell(this);
+    cmd->execute();
+  }
 }
 

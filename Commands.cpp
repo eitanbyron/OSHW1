@@ -138,7 +138,7 @@ ChpromptCommand::ChpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line)
   if( getNumofArg()<=1) {
     new_prompt=this->prompt;
   }else{
-    new_prompt=this->args[1];
+    new_prompt=this->args_[1];
   }
 }
 
@@ -158,43 +158,97 @@ void JobsCommand::execute()
   this->job_list->printJobsList();
 }
 
+
+
+KillCommand::KillCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line) , job_list(jobs){}
+
+void KillCommand::execute()
+{
+  if(args_[1]==nullptr || args_[1][0]!= '-' || args_[2]==nullptr || arg[3]==nullptr)
+  {
+      std::cerr<<"smash error: kill: invalid arguments";
+      return;
+  } 
+  int sig_num;
+  try{
+     sig_num=stoi(args_[1]);
+    }catch(std::invalid_argument &e){
+      std::cerr << "smash error: kill: invalid arguments";
+      return;
+    }
+    sig_num=sig_num*(-1);
+    if(sig_num<1)
+    {
+      std::cerr << "smash error: kill: invalid arguments";
+      return;
+    }
+    int job_id;
+    try{
+     job_id=stoi(args_[2]);
+    }catch(std::invalid_argument &e){
+      std::cerr << "smash error: kill: invalid arguments";
+      return;
+    }
+    JobsList::JobEntry* job_to_handle=this->job_list->getJobById(job_id);
+    if(!job_to_handle)
+    {
+      cerr<<"smash error: kill: job-id "<<job_id<<" does not exist";
+      return;
+    }
+    if(kill(job_to_handle->getProccesPid(),sig_num)==0)
+    {
+      cout << "signal number " << sig_num << " was sent to pid " << job_to_handle->getProccesPid() << endl;
+    }else{
+      perror ("smash error: kill failed");
+    }
+}
+
 BackgroundCommand::BackgroundCommand(const_cast* cmd_line , JobsList* job_list):BuiltInCommand(cmd_line),job_list(job_list){}
 
 void BackgroundCommand::execute()
 {
-
   if (getNumofArg() > 2)
   {
-    // TODO: handle errors
+    std::cerr << "smash error: bg: invalid arguments";
+    return;
   }
-
-  int job_id = -1;
-  JobsList::JobEntry *job_entry = new JobsList::JobEntry(0, nullptr, false);
-  
-  if (getNumofArg() == 1)
+  int job_id=-1;
+  JobsList::JobEntry*  job_to_resume=nullptr;
+  if(getNumofArg()==1)
   {
-    job_entry = job_list->getLastStoppedJob(&job_id);
-    if (job_entry->isStopped())
+    job_id=this->job_list->getLastStoppedJob()->getJobId();
+    job_to_resume=this->job_list->getJobById(job_id);
+    if((!job_to_resume) || (job_id==-1))
     {
-      // TODO: print jobentry->cmdLine
-      //TODO: resume job entry
+      std::cerr << "smash error: bg: there is no stopped jobs to resume";
+      return;
     }
-
+  }else if(getNumofArg()==2){
+    try{
+     job_id=stoi(args_[1]);
+    }catch(std::invalid_argument &e){
+      std::cerr << "smash error: bg: invalid arguments";
+      return;
+    }
+    job_to_resume=this->job_list->getJobById(job_id); 
+    if(!job_to_resume)
+    {
+     std::cerr << "smash error: bg: job-id " << job_id << " does not exist" ;    
+     return;
+    }else if(!(job_to_resume->isJobStopped())){
+      std::cerr << "smash error: bg: job-id "<< job_id <<" is already running in the background";
+      return;
+    }
   }
-  else if (getNumofArg() == 2)
+ 
+  cout<<job_to_resume->getCommand()->getCommandName()<<" : "<<job_to_resume->getProccesPid()<<endl;
+  if( kill( job_to_resume->getProccesPid(), SIGCONT)!=0 )
   {
-    job_entry = job_list->getJobById(stoi(args[1]));
-    
-    if (!job_entry)
-    {
-      // TODO: print error message - job does not exist
-
-    }
+      perror ("smash error: kill failed");
+      return;
   }
-  
-
-
 }
+
 
 //*************************JobsList implementation******************************///
 JobsList::JobEntry::JobEntry(int id, Command* command,bool is_stopped=false):job_id(id),command(command),is_stopped(is_stopped){}
@@ -252,7 +306,7 @@ void JobsList::removeFinishedJobs()
 JobsList::JobEntry* JobsList::getJobById(int jobId)
 {
   removeFinishedJobs();
-  JobEntry* to_return;
+  JobEntry* to_return=nullptr;
   vector<JobEntry>::iterator curr=this->getJobList().begin();
   while (curr!=this->getJobList().end())
   {
@@ -300,12 +354,12 @@ void JobsList::printJobsList()
 {
   removeFinishedJobs();
   vector<JobEntry>* job_list_to_print=this->getJobList();
-
+  
   vector<JobEntry>::iterator current_job=job_list_to_print->begin();
   //iteration over all the jobs list
   for(current_job  ; current_job != job_list_to_print->end(); current_job++)
   {
-    
+      
     time_t time_diffrential=difftime(time(nullptr),current_job->getJobStartingTime());
     if(!(current_job->isJobStopped()))
     {

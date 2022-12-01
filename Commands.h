@@ -5,7 +5,6 @@
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
-
 #include <time.h>
 
 
@@ -31,8 +30,6 @@ class Command {
   virtual void execute() = 0;
   //virtual void prepare();
   //virtual void cleanup();
-
-
   char* getCommandName(){return this->command_name_;}
   int getNumofArg();
   char* getSpecificArg (int arg_appearance);
@@ -121,6 +118,7 @@ public:
 class KillCommand : public BuiltInCommand {
     /* Bonus */
     // TODO: Add your data members
+    JobsList* job_list;
 public:
     KillCommand(const char* cmd_line, JobsList* jobs);
     virtual ~KillCommand() {}
@@ -200,7 +198,10 @@ class JobsList {
   int getJobId(){return this->job_id;}
   bool isJobStopped(){return this->is_stopped;}
   time_t getJobStartingTime(){return this->job_starting_time;}
-  int getProccesPid(){return this->procces_pid;}
+  int getProccesPid(){return this->procces_pid;}  // need to check pid init is done
+
+  void setProccesPid(){}  //need to add set to the procces id and to add get func for pid in command
+
   Command* getCommand(){return this->command;}
   void setJobStatus(bool status){this->is_stopped=status;}
   void stopJob();
@@ -209,7 +210,7 @@ class JobsList {
  // TODO: Add your data members
  private:
   vector<JobEntry*> jobs_list;
-
+    
  public:
   JobsList();
   ~JobsList();

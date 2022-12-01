@@ -151,7 +151,7 @@ BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line) {
 ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line){}
 
 void ShowPidCommand::execute() {
-    std::cout << "smash pid is " <<this->cu
+    std::cout << "smash pid is " <<SmallShell::getInstance().getShellPid()<<std::endl;
 }
 
 
@@ -164,6 +164,7 @@ ChpromptCommand::ChpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line)
 }
 
 GetCurrDirCommand::GetCurrDirCommand(const char* cmd_line):BuiltInCommand(cmd_line){}
+
 void GetCurrDirCommand::execute()
 {
   char buf[COMMAND_ARGS_MAX_LENGTH];

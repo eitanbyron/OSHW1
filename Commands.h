@@ -40,7 +40,8 @@ class Command {
 
 };
 
-//**********************built-in commands***************************************//
+
+//**********************Built-in commands***************************************//
 class BuiltInCommand : public Command {
 public:
     BuiltInCommand(const char* cmd_line);
@@ -65,12 +66,15 @@ public:
     void execute() override;
 };
 
-class pwdCommand : public BuiltInCommand {
+
+
+class GetCurrDirCommand : public BuiltInCommand {
 public:
-    pwdCommand(const char* cmd_line);
-    virtual ~pwdCommand() {}
+    GetCurrDirCommand(const char* cmd_line);
+    virtual ~GetCurrDirCommand() {}
     void execute() override;
 };
+
 
 class ChangeDirCommand : public BuiltInCommand {
     char** last_directory;
@@ -108,30 +112,11 @@ public:
 
 };
 
-class TimeoutCommand : public BuiltInCommand {
-/* Optional */
+class QuitCommand : public BuiltInCommand {
 // TODO: Add your data members
 public:
-    explicit TimeoutCommand(const char* cmd_line);
-    virtual ~TimeoutCommand() {}
-    void execute() override;
-};
-
-class FareCommand : public BuiltInCommand {
-    /* Optional */
-    // TODO: Add your data members
-public:
-    FareCommand(const char* cmd_line);
-    virtual ~FareCommand() {}
-    void execute() override;
-};
-
-class SetcoreCommand : public BuiltInCommand {
-    /* Optional */
-    // TODO: Add your data members
-public:
-    SetcoreCommand(const char* cmd_line);
-    virtual ~SetcoreCommand() {}
+    QuitCommand(const char* cmd_line, JobsList* jobs);
+    virtual ~QuitCommand() {}
     void execute() override;
 };
 
@@ -145,13 +130,7 @@ public:
 };
 
 
-
-class GetCurrDirCommand : public BuiltInCommand {
-public:
-    GetCurrDirCommand(const char* cmd_line);
-    virtual ~GetCurrDirCommand() {}
-    void execute() override;
-};
+//**********************External and special commands***************************************//
 
 class ExternalCommand : public Command {
  public:
@@ -178,22 +157,33 @@ class RedirectionCommand : public Command {
   //void cleanup() override;
 };
 
+class FareCommand : public BuiltInCommand {
+    /* Optional */
+    // TODO: Add your data members
+public:
+    FareCommand(const char* cmd_line);
+    virtual ~FareCommand() {}
+    void execute() override;
+};
 
+class SetcoreCommand : public BuiltInCommand {
+    /* Optional */
+    // TODO: Add your data members
+public:
+    SetcoreCommand(const char* cmd_line);
+    virtual ~SetcoreCommand() {}
+    void execute() override;
+};
 
-
-
-
-
-
-
-class JobsList;
-class QuitCommand : public BuiltInCommand {
+class TimeoutCommand : public BuiltInCommand {
+/* Optional */
 // TODO: Add your data members
 public:
-  QuitCommand(const char* cmd_line, JobsList* jobs);
-  virtual ~QuitCommand() {}
-  void execute() override;
+    explicit TimeoutCommand(const char* cmd_line);
+    virtual ~TimeoutCommand() {}
+    void execute() override;
 };
+
 
 
 class JobsList {
@@ -238,6 +228,9 @@ class JobsList {
   static int last_job_id;
 };
 int JobsList::last_job_id=0;
+
+
+
 
 
 

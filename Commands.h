@@ -23,21 +23,19 @@ class Command {
   char* args_[COMMAND_MAX_ARGS];
   int args_num_;
   pid_t cmd_pid_;
+  bool is_background_ = false;
   char command_name_[COMMAND_ARGS_MAX_LENGTH];
  public:  
   Command(const char* cmd_line);
-  virtual ~Command();
+  virtual ~Command() = default;
   virtual void execute() = 0;
   //virtual void prepare();
   //virtual void cleanup();
 
 
   char* getCommandName(){return this->command_name_;}
-  void setArgsValues(char** args);
-  void setArgsNum(int num);
   int getNumofArg();
   char* getSpecificArg (int arg_appearance);
-  void changeSpecificArg (int arg_appearance, char* new_arg);
 };
 
 

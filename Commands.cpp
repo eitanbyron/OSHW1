@@ -91,10 +91,6 @@ CmdType checkCommandType (const char* cmd_line)
 
 //*************************Command implementation******************************///
 
-void Command::setArgsNum(int num) {
-    this->args_num_ = num;
-}
-
 int Command::getNumofArg() {
     return this->args_num_;
 }
@@ -105,48 +101,29 @@ char* Command::getSpecificArg(int arg_appearance) {
     return this->args_[arg_appearance];
 }
 
-void Command::changeSpecificArg(int arg_appearance, char* new_arg) {
-    if (arg_appearance > args_num_ -1)
-        return;
-    args_[arg_appearance] = new_arg;
-}
-
-void Command::setArgsValues(char **args_arr) {
-    if (!args_arr)
-        return;
-    for (int i = 0; i<COMMAND_MAX_ARGS; i++)
-    {
-        this->args_[i] = args_arr[i];
-    }
-}
-
 Command::Command(const char *cmd_line) {
 
     this->cmd_pid_ =-1;
+    this->is_background_ = _isBackgroundComamnd(cmd_line);
     for(int i=0; i<COMMAND_MAX_ARGS; i++)
         this->args_[i] = nullptr;
-    this->args_num_ = _parseCommandLine(cmd_line, args_) + 1; //parse return num of args or num -1?
-    this->cmd_pid_ =-1;
+    this->args_num_ = _parseCommandLine(cmd_line, args_) + 1;//parse return num of args or num -1?
+    if (this->is_background_)
+    {
+        for (int i =0; i<args_num_; i++)
+        {
+         if(_isBackgroundComamnd(this->args_[i]))
+             _removeBackgroundSign(this->args_[i]);
+        }
+    }
 }
+
 
 
 
 
 //*************************Built-in commands******************************///
-BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line) {
-    if (_isBackgroundComamnd(cmd_line))
-    {
-        for (int i=0; i<this->getNumofArg(); i++)
-        {
-            char* temp = this->getSpecificArg(i);
-            if (_isBackgroundComamnd(temp)) {
-                _removeBackgroundSign(temp);
-                this->changeSpecificArg(i,temp);
-            }
-        }
-    }
-}
-
+BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line){}
 
 ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line){}
 
@@ -413,7 +390,7 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
                 return new QuitCommand(cmd_line, this->getJobsList());
             if ((first_word == "kill") || (first_word == "kill&"))
                 return new KillCommand(cmd_line, this->getJobsList());
-            if (first_word == "timeout")
+            if ((first_word == "timeout") || (first_word == "timeout&"))
                 return new TimeoutCommand(cmd_line);
             return new ExternalCommand(cmd_line);
         }

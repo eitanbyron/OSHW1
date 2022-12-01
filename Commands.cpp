@@ -92,17 +92,23 @@ CmdType checkCommandType (const char* cmd_line)
 //*************************Command implementation******************************///
 
 void Command::setArgsNum(int num) {
-    this->args_num = num;
+    this->args_num_ = num;
 }
 
 int Command::getNumofArg() {
-    return this->args_num;
+    return this->args_num_;
 }
 
 char* Command::getSpecificArg(int arg_appearance) {
-    if (arg_appearance > args_num -1)
+    if (arg_appearance > args_num_ -1)
         return nullptr;
-    return this->args[arg_appearance];
+    return this->args_[arg_appearance];
+}
+
+void Command::changeSpecificArg(int arg_appearance, char* new_arg) {
+    if (arg_appearance > args_num_ -1)
+        return;
+    args_[arg_appearance] = new_arg;
 }
 
 void Command::setArgsValues(char **args_arr) {
@@ -110,17 +116,17 @@ void Command::setArgsValues(char **args_arr) {
         return;
     for (int i = 0; i<COMMAND_MAX_ARGS; i++)
     {
-        this->args[i] = args_arr[i];
+        this->args_[i] = args_arr[i];
     }
 }
 
 Command::Command(const char *cmd_line) {
 
-    this->cmd_pid =-1;
+    this->cmd_pid_ =-1;
     for(int i=0; i<COMMAND_MAX_ARGS; i++)
-        this->args[i] = nullptr;
-    this->args_num = _parseCommandLine(cmd_line, args); //parse return num of args or num -1?
-    this->cmd_pid =-1;
+        this->args_[i] = nullptr;
+    this->args_num_ = _parseCommandLine(cmd_line, args_) + 1; //parse return num of args or num -1?
+    this->cmd_pid_ =-1;
 }
 
 
@@ -130,11 +136,22 @@ Command::Command(const char *cmd_line) {
 BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line) {
     if (_isBackgroundComamnd(cmd_line))
     {
-
-
-
-
+        for (int i=0; i<this->getNumofArg(); i++)
+        {
+            char* temp = this->getSpecificArg(i);
+            if (_isBackgroundComamnd(temp)) {
+                _removeBackgroundSign(temp);
+                this->changeSpecificArg(i,temp);
+            }
+        }
     }
+}
+
+
+ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line){}
+
+void ShowPidCommand::execute() {
+    std::cout << "smash pid is " <<this->cu
 }
 
 
@@ -345,14 +362,14 @@ JobsList* SmallShell::getJobsList() {
 }
 
 char* SmallShell::getPrevDir() {
-    return this->shell_prev_dir;
+    return this->shell_prev_dir_;
 }
 
 
 SmallShell::SmallShell(): shell_pid_(getpid()) {
     this->fore_pid_=-1;
     this->jobs_list_ = new JobsList();
-    this->shell_prev_dir = nullptr;
+    this->shell_prev_dir_ = nullptr;
 }
 
 SmallShell::~SmallShell() {

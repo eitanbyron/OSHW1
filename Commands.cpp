@@ -162,7 +162,8 @@ void ChangeDirCommand::execute() {
             return;
         }
         else if (chdir(prev_dir) != 0) //chdir function from unistd.h
-        {    std::cerr<<"smash error: chdir failed"<<std::endl; // need to check if perror neccesry here
+        {
+            perror("smash error: chdir failed");
             return;
         }
         }
@@ -179,6 +180,10 @@ void ChangeDirCommand::execute() {
 
 ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line) {
     this->jobs_list = jobs;
+}
+
+
+void ForegroundCommand::execute() {
     int args_num = this->getNumofArg();
     if (args_num == 1)
         this-> job_id = -1;
@@ -189,19 +194,68 @@ ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobs) : Bui
             if (job_id <= 0)
             {
                 std::cerr << "smash error: fg: job-id " << job_id << " does not exist" <<std::endl;
+                return;
             }
         }
         catch  (std::invalid_argument &e) {
             std::cerr << "smash error: fg: invalid arguments" << std::endl;
+            return;
+        }
+    }
+    else {
+        std::cerr << "smash error: fg: invalid arguments" << std::endl;
+        return;
+    }
+
+    this->jobs_list->removeFinishedJobs();
+    JobsList::JobEntry* the_job;
+
+    if (job_id == -1)
+       the_job = this->jobs_list->getLastJob(&job_id);
+    else
+        the_job = this->jobs_list->getJobById(job_id);
+
+    if (the_job)
+    {
+        int wait_status;
+        pid_t command_pid = the_job->getProccesPid();
+        // TODO: add function that set the current running external
+        this->getSmallShell()->setForePid(command_pid);
+        std::cout << the_job->getCommand()->getCommandName() << " : " << the_job->getProccesPid();
+        bool stopped_status = the_job->isJobStopped();
+        this->jobs_list->removeJobById(job_id);
+        if (stopped_status)
+        {
+           //TODO: boolean check if command isnt pipe.
+            {
+                if (kill(command_pid,SIGCONT) == -1)
+                {
+                 perror("smash error: kill failed");
+                 return;
+                }
+            }
+            //TODO: boolean check if command is pipe.
+            {
+                if (killpg(command_pid,SIGCONT) == -1)
+                {
+                    perror("smash error: killpg failed");
+                    return;
+                }
+            }
+        }
+        if (waitpid(command_pid, &wait_status, WSTOPPED) == -1)
+        {
+            perror("smash error: waitpid failed");
+            return;
         }
     }
     else
-        std::cerr << "smash error: fg: invalid arguments" << std::endl;
-}
-
-
-void ForegroundCommand::execute() {
-
+    {
+       if (job_id == -1)
+           std::cerr << "smash error: fg: jobs list is empty" << std::endl;
+       else
+           std::cerr << "smash error: fg: jobs list is empty" << std::endl;
+    }
 }
 
 

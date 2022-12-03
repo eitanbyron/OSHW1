@@ -13,6 +13,9 @@
 using namespace std;
 typedef int pid_t;
 
+enum RedirectionType {kOverride , kAppend};
+
+
 class SmallShell;
 class JobsList;
 
@@ -32,8 +35,8 @@ class Command {
   //virtual void prepare();
   //virtual void cleanup();
   char* getCommandName(){return this->command_name_;}
-  int getNumofArg();
-  //char* getSpecificArg (int arg_appearance);
+  int getNumofArgs();
+  void setNumofArgs(int new_num);
   void connectShell(SmallShell* smash);
   pid_t getShellPid();
   pid_t getProccesPid(); // to implement
@@ -153,7 +156,10 @@ class PipeCommand : public Command {
 };
 
 class RedirectionCommand : public Command {
- // TODO: Add your data members
+    RedirectionType type_;
+    const char* only_command_;
+    const char* output_file;
+
  public:
   explicit RedirectionCommand(const char* cmd_line);
   virtual ~RedirectionCommand() {}

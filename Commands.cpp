@@ -91,14 +91,12 @@ CmdType checkCommandType (const char* cmd_line)
 
 //*************************Command implementation******************************///
 
-int Command::getNumofArg() {
+int Command::getNumofArgs() {
     return this->args_num_;
 }
 
-char* Command::getSpecificArg(int arg_appearance) {
-    if (arg_appearance > args_num_ -1)
-        return nullptr;
-    return this->args_[arg_appearance];
+void Command::setNumofArgs(int new_num) {
+    args_num_ =new_num;
 }
 
 void Command::connectShell(SmallShell *smash) {
@@ -145,7 +143,7 @@ ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **plastPwd) : Buil
 }
 
 void ChangeDirCommand::execute() {
-    int args_num = this->getNumofArg();
+    int args_num = this->getNumofArgs();
     if (args_num <= 1)
         return;
     if (args_num > 2)
@@ -155,7 +153,7 @@ void ChangeDirCommand::execute() {
     }
     char curr_dir[COMMAND_ARGS_MAX_LENGTH];
     getcwd(curr_dir, sizeof(curr_dir)); //getcwd function from unistd.h
-    if (this->getSpecificArg(1) == "-") {
+    if (this->args_[1] == "-") {
         char *prev_dir = *(this->last_directory);
         if (prev_dir == nullptr){
             std::cerr<<"smash error: cd: OLDPWD not set"<<std::endl;
@@ -167,7 +165,7 @@ void ChangeDirCommand::execute() {
             return;
         }
         }
-        else if (chdir(this->getSpecificArg(1)) != 0) {
+        else if (chdir(this->args_[1]) != 0) {
             std::cerr << "smash error: chdir failed" << std::endl;
             return;
         }
@@ -184,13 +182,13 @@ ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobs) : Bui
 
 
 void ForegroundCommand::execute() {
-    int args_num = this->getNumofArg();
+    int args_num = this->getNumofArgs();
     if (args_num == 1)
         this-> job_id = -1;
     else if (args_num == 2)
     {
         try {
-            this->job_id = stoi(this->getSpecificArg(1));
+            this->job_id = stoi(this->args_[1]);
             if (job_id <= 0)
             {
                 std::cerr << "smash error: fg: job-id " << job_id << " does not exist" <<std::endl;
@@ -266,9 +264,9 @@ QuitCommand::QuitCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(
 
 void QuitCommand::execute() {
     bool kill_all =false;
-    for (int i=0; i<this->getNumofArg(); i++)
+    for (int i=0; i<this->getNumofArgs(); i++)
     {
-        if (this->getSpecificArg(i) == "kill"){
+        if (this->args_[1] == "kill"){
             kill_all = true;
             break;
         }
@@ -290,7 +288,7 @@ ChpromptCommand::ChpromptCommand(const char *cmd_line) :BuiltInCommand(cmd_line)
 
 void ChpromptCommand::execute()
 {
-  if( getNumofArg()<=1) {
+  if( getNumofArgs()<=1) {
     prompt="smash";
   }else{
     prompt=this->args_[1];
@@ -363,14 +361,14 @@ BackgroundCommand::BackgroundCommand(const_cast* cmd_line , JobsList* job_list):
 
 void BackgroundCommand::execute()
 {
-  if (getNumofArg() > 2)
+  if (getNumofArgs() > 2)
   {
     std::cerr << "smash error: bg: invalid arguments";
     return;
   }
   int job_id=-1;
   JobsList::JobEntry*  job_to_resume=nullptr;
-  if(getNumofArg()==1)
+  if(getNumofArgs()==1)
   {
     job_id=this->job_list->getLastStoppedJob()->getJobId();
     job_to_resume=this->job_list->getJobById(job_id);
@@ -379,7 +377,7 @@ void BackgroundCommand::execute()
       std::cerr << "smash error: bg: there is no stopped jobs to resume";
       return;
     }
-  }else if(getNumofArg()==2){
+  }else if(getNumofArgs()==2){
     try{
      job_id=stoi(args_[1]);
     }catch(std::invalid_argument &e){
@@ -621,6 +619,115 @@ void ExternalCommand::execute()
 
 }
 
+//*************************special Commands******************************///
+
+RedirectionCommand::RedirectionCommand(const char *cmd_line) : Command(cmd_line) {
+    int args_num = this-> getNumofArgs();
+    output_file = args_[args_num-1];
+    string s;
+    for (int i = 0; i < args_num; i++)
+    {
+        if (this->args_[i] == ">") {
+            if (this->args_[i + 1] == ">")
+                type_ = kAppend;
+            else
+                type_ = kOverride;
+            break;
+        }
+        if (this->args_[i] == ">>"){
+            type_ = kAppend;
+            break;
+        }
+        s= s.append(this->args_[i]);
+        s= s.append(" ");
+    }
+
+    only_command_ = s.c_str();
+    for(int i=0; i<COMMAND_MAX_ARGS; i++)
+        this->args_[i] = nullptr;
+    this->setNumofArgs(_parseCommandLine(only_command_, args_) + 1);
+}
+
+
+void RedirectionCommand::execute() {
+    int fd_dst;
+    if (type_ == kAppend)
+        fd_dst = open(output_file, O_APPEND | O_CREAT | O_WRONLY, 0655);
+    if (type_ == kOverride)
+        fd_dst = open(output_file, O_TRUNC | O_CREAT | O_WRONLY, 0655);
+    if (fd_dst == -1) {
+        perror("smash error: open failed");
+        return;
+    }
+
+    string command_name =args_[0];
+    bool is_simple = ((command_name == "chprompt") || (command_name == "showpid") || (command_name == "pwd") ||
+            (command_name == "cd") || (command_name == "jobs") || (command_name == "fg") || (command_name == "bg") ||
+            (command_name == "quit") || (command_name == "cat") || (command_name == "timeput") || (command_name == "kill"));
+    if (is_simple) {
+        int temp_fd = dup(1);
+        if (temp_fd == -1){
+            perror("smash error: dup failed");
+            return;
+    }
+        if (dup2(fd_dst, STDOUT_FILENO) == -1)
+        {
+            perror("smash error: dup2 failed");
+            return;
+        }
+        this->getSmallShell()->executeCommand(args_[0]);
+        if (dup2(temp_fd, STDOUT_FILENO) == -1)
+        {
+            perror("smash error: dup2 failed");
+            return;
+        }
+    }
+    else {
+        pid_t command_pid = fork();
+        if (command_pid == -1)
+        {
+            perror("smash error: fork failed");
+            return;
+        }
+        if (command_pid == 0)
+        {
+            if (setpgrp() == -1)
+            {
+                perror("smash error: setpgrp failed");
+                return;
+            }
+            if (close(STDOUT_FILENO) == -1)
+            {
+                perror("smash error: close failed");
+                return;
+            }
+            if (dup2(fd_dst, STDOUT_FILENO) == -1)
+            {
+                perror("smash error: dup2 failed");
+                return;
+            }
+            if (close(fd_dst) == -1)
+            {
+                perror("smash error: close failed");
+                return;
+            }
+            this->getSmallShell()->executeCommand(args_[0]);
+            exit(0);
+        }
+        else
+            if (waitpid(command_pid, nullptr, WSTOPPED) == -1) {
+                perror("smash error: waitpid failed");
+                return;
+            }
+    }
+    if (close(fd_dst) == -1)
+    {
+        perror("smash error: close failed");
+        return;
+    }
+}
+
+
 
 //************************* SmallShell implementation******************************///
 
@@ -640,7 +747,7 @@ void SmallShell::setForePid(pid_t new_pid) {
    this->fore_pid_=new_pid;
 }
 
-vector<JobsList::JobEntry>* SmallShell::getJobsList() {
+JobsList* SmallShell::getJobsList() {
     return this->jobs_list_;
 }
 

@@ -571,10 +571,11 @@ void JobsList::printJobsList()
 
 
 //*************************External Commands****************************************///
-ExternalCommand::ExternalCommand(const char* cmd_line): Command(cmd_line)  {}
+ExternalCommand::ExternalCommand(const char* cmd_line): Command(cmd_line) , cmd(cmd_line){}
 
 void ExternalCommand::execute()
 {
+  bool is_bg=_isBackgroundComamnd(this->cmd);
   pid_t curr_pid=fork();
   if(curr_pid==-1)
   {
@@ -582,12 +583,38 @@ void ExternalCommand::execute()
     return;
   }
 
+  
   if(curr_pid==0) 
   {
     if(setpgrp()==-1)
     {
       perror("smash error: setpgrp failed");
       return;
+    }
+
+    char* args_to_send[4];
+    args_to_send[0]=(char*)"/bin/bash";
+    args_to_send[1]=(char*)"-c";
+    args_to_send[2]=this->cmd;
+    args_to_send[2]=nullptr;
+    _removeBackgroundSign(args_to_send[2]);
+    
+    if(execv(args_to_send[0],args_to_send);==-1)
+    {
+      perror("smash error: execv failed");
+      return;
+    }
+  }else{ 
+        if(is_bg)
+    {
+      this->setPid(curr_pid);
+      this->getSmallShell()->getJobsList()->addJob(this);
+    }else{
+      this->getSmallShell()->setForePid(curr_pid);
+      if(waitpid(curr_pid,nullptr,WSROPPED)==-1)
+      {
+        perror("smash error: waitpid failed");
+      }
     }
   }
 

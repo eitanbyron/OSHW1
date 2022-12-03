@@ -37,6 +37,7 @@ class Command {
   void connectShell(SmallShell* smash);
   pid_t getShellPid();
   pid_t getProccesPid(); // to implement
+  void setPid(pid_t process_pid); // to implemnt
   void setPrevDir(char* new_prev_dir);
   char* args_[COMMAND_MAX_ARGS];
   SmallShell* getSmallShell(){return this->current_shell;}
@@ -136,6 +137,7 @@ public:
 //**********************External and Special commands***************************************//
 
 class ExternalCommand : public Command {
+  char* cmd;
  public:
   ExternalCommand(const char* cmd_line);
   virtual ~ExternalCommand() {}

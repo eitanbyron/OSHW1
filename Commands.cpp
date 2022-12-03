@@ -223,7 +223,7 @@ void QuitCommand::execute() {
     if (kill_all)
     {
         jobs_list->removeFinishedJobs();
-        int jobs_num = this->jobs_list->getJobList().size(); 
+        int jobs_num = this->jobs_list->getJobsList()->size(); 
         std::cout << "smash: sending SIGKILL signal to" <<jobs_num << "jobs:" <<std::endl;
         jobs_list->killAllJobs();
     }
@@ -370,24 +370,24 @@ void JobsList::addJob(Command* cmd, bool isStopped = false)
 {
   removeFinishedJobs();
   int new_job_id=0;
-  vector<JobEntry>* job_list_to_update=this->getJobList();
+  vector<JobEntry>* job_list_to_update=this->getJobsList();
   if(job_list_to_update->empty())
   {
     new_job_id=1;
-    this->last_job_id=new_job_id;
+    this->max_job_id=new_job_id;
   }else{
     int last_job_id=job_list_to_update->rbegin()->getJobId();
     new_job_id=last_job_id+1;
   }
-  this->last_job_id++;
-  JobsList::JobEntry* new_job= new JobsList::JobEntry(this->last_job_id,cmd,isStopped);
+  this->max_job_id++;
+  JobsList::JobEntry* new_job= new JobsList::JobEntry(this->max_job_id,cmd,isStopped);
   job_list_to_update->push_back(new_job);
 }
 
 void JobsList::killAllJobs()
 {
   vector<JobEntry>::iterator job_to_kill;
-  vector<JobEntry>* job_list_to_kill=this->getJobList();
+  vector<JobEntry>* job_list_to_kill=this->getJobsList();
 
   for(job_to_kill=job_list_to_kill->begin()  ; job_to_kill!=job_list_to_kill->end() ;   job_to_kill++)
   {
@@ -401,15 +401,57 @@ void JobsList::killAllJobs()
 
 void JobsList::removeFinishedJobs()
 {
-
+  vector<JobEntry>::iterator prev=this->getJobsList()->begin();
+  vector<JobEntry>::iterator curr=this->getJobsList()->begin();
+  vector<JobEntry>::iterator end_of_list=this->getJobsList()->end();
+  while(curr!=end_of_list)
+  {
+    pid_t pid_to_check=curr->getProccesPid();
+    int check=waitpid(pid_to_check,nullptr,WNOHANG);
+    if(check==-1)
+    {
+      perror("smash error: waitpid failed");
+      return;
+    }else if(check>0){
+      prev=curr;
+      curr++;
+      this->getJobsList()->erase(prev);
+      continue;
+    }
+    prev=curr;
+    curr++;
+  }
+  this->max_job_id=this->getLastJob()->getJobId();
 }
+
+void JobsList::removeJobById(int jobId)
+{
+  vector<JobEntry>::iterator curr=this->getJobsList()->begin();
+  vector<JobEntry>::iterator end_of_list=this->getJobsList()->end();
+  int max_id=0;
+  for(curr ; curr!=end_of_list ; curr++)
+  {
+    if(curr->getJobId()==jobId)
+    {
+      if(curr->getJobId()==this->max_job_id)
+      {
+        this->max_job_id=max_id;
+      }
+      this->getJobsList()->erase(curr);
+      break;
+    }
+    max_id=curr->getJobId();
+  }
+}
+
+
 
 JobsList::JobEntry* JobsList::getJobById(int jobId)
 {
   removeFinishedJobs();
   JobEntry* to_return=nullptr;
-  vector<JobEntry>::iterator curr=this->getJobList().begin();
-  while (curr!=this->getJobList().end())
+  vector<JobEntry>::iterator curr=this->getJobsList()->begin();
+  while (curr!=this->getJobsList()->end())
   {
     int curr_id=curr->getJobId();
     if(curr_id==jobId)
@@ -425,8 +467,8 @@ JobsList::JobEntry* JobsList::getJobById(int jobId)
 JobsList::JobEntry *JobsList::getLastStoppedJob(int *jobId)
 {
   JobEntry* last_stopped_job=nullptr;
-  vector<JobEntry>::iterator curr=this->getJobList().begin();
-  vector<JobEntry>::iterator list_end=this->getJobList().end();
+  vector<JobEntry>::iterator curr=this->getJobsList()->begin();
+  vector<JobEntry>::iterator list_end=this->getJobsList()->end();
   while(curr!=list_end)
   {
     bool is_stopped=curr->isJobStopped();
@@ -442,19 +484,19 @@ JobsList::JobEntry *JobsList::getLastStoppedJob(int *jobId)
 
 JobsList::JobEntry *JobsList::getLastJob(int *lastJobId)
 {
-  if(!(this->getJobList()))
+  if(!(this->getJobsList()))
   {
     return nullptr;
   }
-  lastJobId=this->getJobList().back()->getJobId();//need to check type
-  return this->getJobList().back();//need to check return value
+  lastJobId=this->getJobsList()->end()->getJobId();//need to check type
+  return this->getJobsList()->end();//need to check return value
 }
 
 
 void JobsList::printJobsList() 
 {
   removeFinishedJobs();
-  vector<JobEntry>* job_list_to_print=this->getJobList();
+  vector<JobEntry>* job_list_to_print=this->getJobsList();
   
   vector<JobEntry>::iterator current_job=job_list_to_print->begin();
   //iteration over all the jobs list
@@ -471,6 +513,31 @@ void JobsList::printJobsList()
             <<current_job->getJobId()<<" "<<time_diffrential<<" secs"<<" (stopped)"<<endl;
     }
   }
+}
+
+
+//*************************External Commands****************************************///
+ExternalCommand::ExternalCommand(const char* cmd_line): Command(cmd_line)  {}
+
+void ExternalCommand::execute()
+{
+  pid_t curr_pid=fork();
+  if(curr_pid==-1)
+  {
+    perror("smash error: fork failed");
+    return;
+  }
+
+  if(curr_pid==0) 
+  {
+    if(setpgrp()==-1)
+    {
+      perror("smash error: setpgrp failed");
+      return;
+    }
+  }
+
+
 }
 
 
@@ -492,7 +559,7 @@ void SmallShell::setForePid(pid_t new_pid) {
    this->fore_pid_=new_pid;
 }
 
-JobsList* SmallShell::getJobsList() {
+vector<JobsList::JobEntry>* SmallShell::getJobsList() {
     return this->jobs_list_;
 }
 

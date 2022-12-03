@@ -196,7 +196,7 @@ class JobsList {
   int job_id;
   Command* command;
   bool is_stopped;
-  time_t job_starting_time;
+  time_t job_starting_time; //need to add set for this field 
   int procces_pid;
 
   public:
@@ -206,9 +206,9 @@ class JobsList {
   int getJobId(){return this->job_id;}
   bool isJobStopped(){return this->is_stopped;}
   time_t getJobStartingTime(){return this->job_starting_time;}
-  int getProccesPid(){return this->procces_pid;}  // need to check pid init is done
+  int getProccesPid(){return this->procces_pid;}  
 
-  void setProccesPid(){procces_pid=command->getProccesPid();}  //need to add set to the procces id and to add get func for pid in command
+  void setProccesPid(){procces_pid=command->getProccesPid();} 
 
   Command* getCommand(){return this->command;}
   void setJobStatus(bool status){this->is_stopped=status;}
@@ -231,10 +231,10 @@ class JobsList {
   JobEntry * getLastJob(int* lastJobId);
   JobEntry *getLastStoppedJob(int *jobId);
   // TODO: Add extra methods or modify exisitng ones as needed
-  vector<JobEntry*> getJobList(){return this->jobs_list;}
-  static int last_job_id;
+  vector<JobEntry>* getJobsList(){return this->jobs_list;}
+  static int max_job_id;
 };
-int JobsList::last_job_id=0;
+int JobsList::max_job_id=0;
 
 
 

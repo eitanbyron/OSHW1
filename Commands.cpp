@@ -5,6 +5,7 @@
 #include <sstream>
 #include <sys/wait.h>
 #include <iomanip>
+#include "fcntl.h"
 #include "Commands.h"
 
 using namespace std;
@@ -162,6 +163,7 @@ ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **plastPwd) : Buil
 
 void ChangeDirCommand::execute() {
     int args_num = this->getNumofArgs();
+    string temp_arg= args_[1];
     if (args_num <= 1)
         return;
     if (args_num > 2)
@@ -171,7 +173,7 @@ void ChangeDirCommand::execute() {
     }
     char curr_dir[COMMAND_ARGS_MAX_LENGTH];
     getcwd(curr_dir, sizeof(curr_dir)); //getcwd function from unistd.h
-    if (this->args_[1] == "-") {
+    if (temp_arg == "-") {
         char *prev_dir = *(this->last_directory);
         if (prev_dir == nullptr){
             std::cerr<<"smash error: cd: OLDPWD not set"<<std::endl;
@@ -282,9 +284,10 @@ QuitCommand::QuitCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(
 
 void QuitCommand::execute() {
     bool kill_all =false;
+    string temp_arg = args_[1];
     for (int i=0; i<this->getNumofArgs(); i++)
     {
-        if (this->args_[1] == "kill"){
+        if (temp_arg == "kill"){
             kill_all = true;
             break;
         }
@@ -336,7 +339,7 @@ KillCommand::KillCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(
 
 void KillCommand::execute()
 {
-  if(args_[1]==nullptr || args_[1][0]!= '-' || args_[2]==nullptr || arg[3]==nullptr)
+  if(args_[1]==nullptr || args_[1][0]!= '-' || args_[2]==nullptr || args_[3]==nullptr)
   {
       std::cerr<<"smash error: kill: invalid arguments";
       return;
@@ -529,7 +532,7 @@ JobsList::JobEntry* JobsList::getJobById(int jobId)
       to_return=&curr;
       return to_return;
     }
-    curr++
+    curr++;
   }
   return to_return;
 }
@@ -576,7 +579,7 @@ void JobsList::printJobsList()
     time_t time_diffrential=difftime(time(nullptr),current_job->getJobStartingTime());
     if(!(current_job->isJobStopped()))
     {
-      count<<"["<<current_job->getJobId()<<"] "<<current_job->getCommand()->getCommandName()<<" : "
+      cout<<"["<<current_job->getJobId()<<"] "<<current_job->getCommand()->getCommandName()<<" : "
             <<current_job->getJobId()<<" "<<time_diffrential<<" secs"<<endl;
     }else{
       cout<<"["<<current_job->getJobId()<<"] "<<current_job->getCommand()->getCommandName()<<" : "
@@ -615,7 +618,7 @@ void ExternalCommand::execute()
     args_to_send[2]=nullptr;
     _removeBackgroundSign(args_to_send[2]);
     
-    if(execv(args_to_send[0],args_to_send);==-1)
+    if(execv(args_to_send[0],args_to_send) ==-1)
     {
       perror("smash error: execv failed");
       return;
@@ -627,7 +630,7 @@ void ExternalCommand::execute()
       this->getSmallShell()->getJobsList()->addJob(this);
     }else{
       this->getSmallShell()->setForePid(curr_pid);
-      if(waitpid(curr_pid,nullptr,WSROPPED)==-1)
+      if(waitpid(curr_pid,nullptr,WSTOPPED)==-1)
       {
         perror("smash error: waitpid failed");
       }
@@ -646,27 +649,29 @@ RedirectionCommand::RedirectionCommand(const char *cmd_line) : Command(cmd_line)
     bool second = false;
     for (int i = 0; i < args_num; i++)
     {
-        if ((args_[i] != ">" ) && (args_[i] != ">>"))
+        string temp_arg1 = args_[i];
+        string temp_arg2 = args_[i+1];
+        if ((temp_arg1 != ">" ) && (temp_arg1 != ">>"))
         {
             if (!second) {
-                s1 = s1.append(this->args_[i]);
+                s1 = s1.append(temp_arg1);
                 s1 = s1.append(" ");
             }
             else
             {
-                s2 = s2.append(this->args_[i]);
+                s2 = s2.append(temp_arg1);
                 s2 = s2.append(" ");
             }
         }
         else {
-            if (this->args_[i] == ">") {
-                if (this->args_[i + 1] == ">")
+            if (temp_arg1 == ">") {
+                if (temp_arg2 == ">")
                     type_ = kAppend;
                 else
                     type_ = kOverride;
                 second = true;
             }
-            if (this->args_[i] == ">>") {
+            if (temp_arg1 == ">>") {
                 type_ = kAppend;
                 second = true;
             }
@@ -763,27 +768,29 @@ PipeCommand::PipeCommand(const char *cmd_line) : Command(cmd_line){
     bool second = false;
     for (int i = 0; i < args_num; i++)
     {
-        if ((args_[i] != "|" )&& (args_[i] != "&") && (args_[i] != "|&"))
+        string temp_arg1 =args_[i];
+        string temp_arg2 = args_[i+1];
+        if ((temp_arg1 != "|" )&& (temp_arg1 != "&") && (temp_arg1 != "|&"))
         {
             if (!second) {
-                s1 = s1.append(this->args_[i]);
+                s1 = s1.append(temp_arg1);
                 s1 = s1.append(" ");
             }
             else
             {
-                s2 = s2.append(this->args_[i]);
+                s2 = s2.append(temp_arg1);
                 s2 = s2.append(" ");
             }
         }
         else {
-            if (this->args_[i] == "|") {
-                if (this->args_[i + 1] == "&")
+            if (temp_arg1 == "|") {
+                if (temp_arg2 == "&")
                     type_ = kErr;
                 else
                     type_ = kOut;
                 second = true;
             }
-            if (this->args_[i] == "|&") {
+            if (temp_arg1 == "|&") {
                 type_ = kErr;
                 second = true;
             }
@@ -832,12 +839,12 @@ void PipeCommand::execute() {
                 perror("smash error: setpgrp failed");
                 return;
             }
-            if (close(writetype) == -1) {
+            if (close(type_) == -1) {
                 perror("smash error: close failed");
                 return;
 
             }
-            if (dup2(pipefd[1], writetype) == -1) {
+            if (dup2(pipefd[1], type_) == -1) {
                 perror("smash error: dup2 failed");
                 return;
 
@@ -919,7 +926,7 @@ void PipeCommand::execute() {
             return;
         }
 
-
+//TODO : SIGCONT FUNCTION THAT HANDLE THE SIGNAL
         if (signal(SIGCONT, sigcont) == SIG_ERR) {
             perror("smash error: close failed");
             return;
@@ -1028,7 +1035,7 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
     char* args[COMMAND_MAX_ARGS];
     for(int i=0; i<COMMAND_MAX_ARGS; i++)
         args[i] = nullptr;
-    int args_num = _parseCommandLine(cmd_line, args);
+    _parseCommandLine(cmd_line, args);
     if (args[0] == nullptr)
         return nullptr;
     string first_word = args[0];

@@ -634,6 +634,7 @@ void ExternalCommand::execute()
     }
   }
 
+  //TODO: UPDATE CURRENT EXTERNAL IN THE SHELL
 
 }
 

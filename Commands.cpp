@@ -794,143 +794,141 @@ PipeCommand::PipeCommand(const char *cmd_line) : Command(cmd_line){
 
 
 void PipeCommand::execute() {
-    JobsList* the_job_list=this->getSmallShell()->getJobsList();
+    JobsList *the_job_list = this->getSmallShell()->getJobsList();
     the_job_list->removeFinishedJobs();
     Command *leftcommand;
     Command *rightcommand;
 
     pid_t main_pid = fork();
-    if(main_pid == -1){
+    if (main_pid == -1) {
         perror("smash error: fork failed");
         return;
-    }
-    else if(main_pid !=0) {
+    } else if (main_pid != 0) {
         this->setPid(main_pid);
         this->getSmallShell()->setForePid(this->getProccesPid());
         // TODO: add function that set the current running external
         waitpid(this->getProccesPid(), nullptr, WUNTRACED);
         JobsList *the_job_list1 = this->getSmallShell()->getJobsList();
         the_job_list1->removeFinishedJobs();
-    }
-    else{
-        if(setpgrp()==-1){
+    } else {
+        if (setpgrp() == -1) {
             perror("smash error: setpgrp failed");
             return;
 
         }
         int pipefd[2];
-        if(pipe(pipefd)==-1){
+        if (pipe(pipefd) == -1) {
             perror("smash error: pipe failed");
             return;
         }
         pid_t temp_pid = fork();
-        if(temp_pid == -1){
+        if (temp_pid == -1) {
             perror("smash error: fork failed");
             return;
         }
         if (temp_pid == 0) {
-            if(setpgrp()==-1){
+            if (setpgrp() == -1) {
                 perror("smash error: setpgrp failed");
                 return;
             }
-            if(close(writetype)==-1){
+            if (close(writetype) == -1) {
                 perror("smash error: close failed");
                 return;
 
             }
-            if(dup2(pipefd[1], writetype)==-1){
+            if (dup2(pipefd[1], writetype) == -1) {
                 perror("smash error: dup2 failed");
                 return;
 
             }
-            if(close(pipefd[0])==-1){
+            if (close(pipefd[0]) == -1) {
                 perror("smash error: close failed");
                 return;
 
             }
-            if(close(pipefd[1])==-1){
+            if (close(pipefd[1]) == -1) {
                 perror("smash error: close failed");
                 return;
 
             }
-            const char* left_string_char=left_command_;
-            leftcommand =this->getSmallShell()->CreateCommand(left_string_char);
-            if(leftcommand) {
-                    leftcommand->execute();
+            const char *left_string_char = left_command_;
+            leftcommand = this->getSmallShell()->CreateCommand(left_string_char);
+            if (leftcommand) {
+                leftcommand->execute();
             }
-            pid_t left_command_pid=leftcommand->getProccesPid();
-            while(waitpid(left_command_pid,nullptr,WUNTRACED) > -1){}
+            pid_t left_command_pid = leftcommand->getProccesPid();
+            while (waitpid(left_command_pid, nullptr, WUNTRACED) > -1) {}
 
-            if(close(type_)==-1){
+            if (close(type_) == -1) {
                 perror("smash error: close failed");
                 return;
             }
             exit(0);
         }
         pid_t temp_pid1 = fork();
-        if(temp_pid1 == -1){
+        if (temp_pid1 == -1) {
             perror("smash error: fork failed");
             return;
-        }
-        else if (temp_pid1 == 0) {
-            if(setpgrp()==-1){
+        } else if (temp_pid1 == 0) {
+            if (setpgrp() == -1) {
                 perror("smash error: setpgrp failed");
                 return;
             }
-            if(close(STDIN_FILENO)==-1){
+            if (close(STDIN_FILENO) == -1) {
                 perror("smash error: close failed");
                 return;
 
             }
-            if(dup2(pipefd[0], STDIN_FILENO)==-1){
+            if (dup2(pipefd[0], STDIN_FILENO) == -1) {
                 perror("smash error: dup2 failed");
                 return;
             }
-            if(close(pipefd[1])){
+            if (close(pipefd[1])) {
                 perror("smash error: close failed");
                 return;
             }
-            if(close(pipefd[0])==-1){
+            if (close(pipefd[0]) == -1) {
                 perror("smash error: close failed");
                 return;
             }
 
-            const char* right_string_char=right_command_;
+            const char *right_string_char = right_command_;
 
             rightcommand = this->getSmallShell()->CreateCommand(right_string_char);
-            if(rightcommand) {
-                    rightcommand->execute();
+            if (rightcommand) {
+                rightcommand->execute();
             }
-            pid_t rightcommandpid=rightcommand->getProccesPid();
-            while(waitpid(rightcommandpid,nullptr,WUNTRACED) > -1){}
+            pid_t rightcommandpid = rightcommand->getProccesPid();
+            while (waitpid(rightcommandpid, nullptr, WUNTRACED) > -1) {}
 
-            if(close(STDIN_FILENO)==-1){
+            if (close(STDIN_FILENO) == -1) {
                 perror("smash error: close failed");
                 return;
             }
             exit(0);
         }
-        PipeCommand::pid_left= temp_pid1;
+        PipeCommand::pid_left = temp_pid1;
         PipeCommand::pid_right = temp_pid;
-        if(close(pipefd[0])==-1){
+        if (close(pipefd[0]) == -1) {
             perror("smash error: close failed");
             return;
         }
-        if(close(pipefd[1])==-1){
+        if (close(pipefd[1]) == -1) {
             perror("smash error: close failed");
             return;
         }
 
 
-        if(signal(SIGCONT , sigcont)==SIG_ERR) {
+        if (signal(SIGCONT, sigcont) == SIG_ERR) {
             perror("smash error: close failed");
             return;
         }
-        for(int i=0;i<4;i++ ){
+        for (int i = 0; i < 4; i++) {
             int tempstatus;
             wait(&tempstatus);
         }
         exit(0);
+    }
 }
 
 

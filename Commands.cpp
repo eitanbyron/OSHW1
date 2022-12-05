@@ -945,8 +945,6 @@ void PipeCommand::execute() {
             perror("smash error: close failed");
             return;
         }
-
-//TODO : SIGCONT FUNCTION THAT HANDLE THE SIGNAL
         if (signal(SIGCONT, sigcont) == SIG_ERR) {
             perror("smash error: close failed");
             return;
@@ -985,7 +983,7 @@ TimeoutCommand::TimeoutCommand(const char *cmd_line) : BuiltInCommand(cmd_line) 
 }
 
 void TimeoutCommand::execute() {
-    if ((duration_ <= 0) || (!only_command_)) {
+    if ((duration_ <= 0) || (!only_command_) || (this->getNumofArgs() <3)) {
         std::cerr << "smash error: timeout: invalid arguments";
         return;
     }
@@ -1031,8 +1029,8 @@ Command* SmallShell::getCurrExternal() {
     return this->curr_external;
 }
 
-void SmallShell::setCurrExternal(Command *new_exeternal) {
-    this->curr_external = new_exeternal;
+void SmallShell::setCurrExternal(Command *new_external) {
+    this->curr_external = new_external;
 }
 
 

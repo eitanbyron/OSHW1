@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <list>
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
@@ -206,6 +207,7 @@ public:
 
 
 
+
 class JobsList {
  public:
   class JobEntry {
@@ -264,6 +266,7 @@ private:
     const pid_t shell_pid_;
     pid_t fore_pid_;
     JobsList* jobs_list_;
+    std::list<TimeoutCommand> timeout_list_;
     char* shell_prev_dir_;
     Command* curr_external;
 
@@ -291,7 +294,7 @@ public:
     char* getPrevDir();
     void setPrevDir(char* new_prev_dir);
     Command* getCurrExternal();
-    void setCurrExternal (Command* new_exeternal);
+    void setCurrExternal (Command* new_external);
 };
 
 #endif //SMASH_COMMAND_H_

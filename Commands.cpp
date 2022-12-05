@@ -237,7 +237,7 @@ void ForegroundCommand::execute() {
     {
         int wait_status;
         pid_t command_pid = the_job->getProccesPid();
-        // TODO: add function that set the current running external
+        this->getSmallShell()->setCurrExternal(the_job->getCommand());
         this->getSmallShell()->setForePid(command_pid);
         std::cout << the_job->getCommand()->getCommandName() << " : " << the_job->getProccesPid();
         bool stopped_status = the_job->isJobStopped();
@@ -814,7 +814,7 @@ void PipeCommand::execute() {
     } else if (main_pid != 0) {
         this->setPid(main_pid);
         this->getSmallShell()->setForePid(this->getProccesPid());
-        // TODO: add function that set the current running external
+        this->getSmallShell()->setCurrExternal(this);
         waitpid(this->getProccesPid(), nullptr, WUNTRACED);
         JobsList *the_job_list1 = this->getSmallShell()->getJobsList();
         the_job_list1->removeFinishedJobs();
@@ -970,6 +970,8 @@ void TimeoutCommand::execute() {
         return;
     }
 
+    //TODO: FINISH THE FUNCTION
+
 }
 
 
@@ -1005,11 +1007,11 @@ void SmallShell::setPrevDir(char *new_prev_dir) {
     this->shell_prev_dir_=new_prev_dir;
 }
 
-ExternalCommand* SmallShell::getCurrExternal() {
+Command* SmallShell::getCurrExternal() {
     return this->curr_external;
 }
 
-void SmallShell::setCurrExternal(ExternalCommand *new_exeternal) {
+void SmallShell::setCurrExternal(Command *new_exeternal) {
     this->curr_external = new_exeternal;
 }
 

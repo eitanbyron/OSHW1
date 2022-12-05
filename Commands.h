@@ -264,7 +264,7 @@ private:
     pid_t fore_pid_;
     JobsList* jobs_list_;
     char* shell_prev_dir_;
-    ExternalCommand* curr_external;
+    Command* curr_external;
 
 
     SmallShell();
@@ -289,8 +289,8 @@ public:
     JobsList* getJobsList();
     char* getPrevDir();
     void setPrevDir(char* new_prev_dir);
-    ExternalCommand* getCurrExternal();
-    void setCurrExternal (ExternalCommand* new_exeternal);
+    Command* getCurrExternal();
+    void setCurrExternal (Command* new_exeternal);
 };
 
 #endif //SMASH_COMMAND_H_

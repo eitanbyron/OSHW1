@@ -14,6 +14,8 @@ using namespace std;
 typedef int pid_t;
 
 enum RedirectionType {kOverride , kAppend};
+enum PipeType {kOut =1 , kErr =2};
+
 
 
 class SmallShell;
@@ -26,6 +28,7 @@ class Command {
   int args_num_;
   pid_t cmd_pid_;
   bool is_background_ = false;
+  bool is_pipe_ =false;
   char command_name_[COMMAND_ARGS_MAX_LENGTH];
 
  public:  
@@ -39,11 +42,13 @@ class Command {
   void setNumofArgs(int new_num);
   void connectShell(SmallShell* smash);
   pid_t getShellPid();
-  pid_t getProccesPid(); // to implement
-  void setPid(pid_t process_pid); // to implemnt
+  pid_t getProccesPid();
+  void setPid(pid_t process_pid);
   void setPrevDir(char* new_prev_dir);
   char* args_[COMMAND_MAX_ARGS];
   SmallShell* getSmallShell(){return this->current_shell;}
+  void makePipe();
+  bool isPipe();
 };
 
 
@@ -148,7 +153,12 @@ class ExternalCommand : public Command {
 };
 
 class PipeCommand : public Command {
-  // TODO: Add your data members
+   PipeType type_;
+   const char* right_command_;
+   const char* left_command_;
+   static pid_t pid_right;
+    static pid_t pid_left;
+
  public:
   PipeCommand(const char* cmd_line);
   virtual ~PipeCommand() {}

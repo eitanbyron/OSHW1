@@ -11,6 +11,8 @@ using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 enum CmdType {kOrdinary , kRedirection, kPipe};
+pid_t PipeCommand::pid_right = -2;
+pid_t PipeCommand::pid_left = -2;
 
 #if 0
 #define FUNC_ENTRY()  \
@@ -105,6 +107,22 @@ void Command::connectShell(SmallShell *smash) {
 
 pid_t Command::getShellPid() {
     return current_shell->getShellPid();
+}
+
+void Command::makePipe() {
+    is_pipe_=true;
+}
+
+bool Command::isPipe() {
+    return is_pipe_;
+}
+
+void Command::setPid(pid_t process_pid) {
+    this->cmd_pid_ = process_pid;
+}
+
+pid_t Command::getProccesPid() {
+    return this->cmd_pid_;
 }
 
 void Command::setPrevDir(char *new_prev_dir) {
@@ -224,7 +242,7 @@ void ForegroundCommand::execute() {
         this->jobs_list->removeJobById(job_id);
         if (stopped_status)
         {
-           //TODO: boolean check if command isnt pipe.
+           if (!(this->isPipe()))
             {
                 if (kill(command_pid,SIGCONT) == -1)
                 {
@@ -232,7 +250,7 @@ void ForegroundCommand::execute() {
                  return;
                 }
             }
-            //TODO: boolean check if command is pipe.
+            else
             {
                 if (killpg(command_pid,SIGCONT) == -1)
                 {
@@ -623,29 +641,38 @@ void ExternalCommand::execute()
 
 RedirectionCommand::RedirectionCommand(const char *cmd_line) : Command(cmd_line) {
     int args_num = this-> getNumofArgs();
-    output_file = args_[args_num-1];
-    string s;
+    string s1,s2;
+    bool second = false;
     for (int i = 0; i < args_num; i++)
     {
-        if (this->args_[i] == ">") {
-            if (this->args_[i + 1] == ">")
-                type_ = kAppend;
+        if ((args_[i] != ">" ) && (args_[i] != ">>"))
+        {
+            if (!second) {
+                s1 = s1.append(this->args_[i]);
+                s1 = s1.append(" ");
+            }
             else
-                type_ = kOverride;
-            break;
+            {
+                s2 = s2.append(this->args_[i]);
+                s2 = s2.append(" ");
+            }
         }
-        if (this->args_[i] == ">>"){
-            type_ = kAppend;
-            break;
+        else {
+            if (this->args_[i] == ">") {
+                if (this->args_[i + 1] == ">")
+                    type_ = kAppend;
+                else
+                    type_ = kOverride;
+                second = true;
+            }
+            if (this->args_[i] == ">>") {
+                type_ = kAppend;
+                second = true;
+            }
         }
-        s= s.append(this->args_[i]);
-        s= s.append(" ");
     }
-
-    only_command_ = s.c_str();
-    for(int i=0; i<COMMAND_MAX_ARGS; i++)
-        this->args_[i] = nullptr;
-    this->setNumofArgs(_parseCommandLine(only_command_, args_) + 1);
+    only_command_ = s1.c_str();
+    output_file = s2.c_str();
 }
 
 
@@ -659,7 +686,6 @@ void RedirectionCommand::execute() {
         perror("smash error: open failed");
         return;
     }
-
     string command_name =args_[0];
     bool is_simple = ((command_name == "chprompt") || (command_name == "showpid") || (command_name == "pwd") ||
             (command_name == "cd") || (command_name == "jobs") || (command_name == "fg") || (command_name == "bg") ||
@@ -727,6 +753,185 @@ void RedirectionCommand::execute() {
     }
 }
 
+
+
+PipeCommand::PipeCommand(const char *cmd_line) : Command(cmd_line){
+    this->makePipe();
+    int args_num = this-> getNumofArgs();
+    string s1, s2;
+    bool second = false;
+    for (int i = 0; i < args_num; i++)
+    {
+        if ((args_[i] != "|" )&& (args_[i] != "&") && (args_[i] != "|&"))
+        {
+            if (!second) {
+                s1 = s1.append(this->args_[i]);
+                s1 = s1.append(" ");
+            }
+            else
+            {
+                s2 = s2.append(this->args_[i]);
+                s2 = s2.append(" ");
+            }
+        }
+        else {
+            if (this->args_[i] == "|") {
+                if (this->args_[i + 1] == "&")
+                    type_ = kErr;
+                else
+                    type_ = kOut;
+                second = true;
+            }
+            if (this->args_[i] == "|&") {
+                type_ = kErr;
+                second = true;
+            }
+        }
+    }
+    left_command_ = s1.c_str();
+    right_command_ =s2.c_str();
+}
+
+
+void PipeCommand::execute() {
+    JobsList* the_job_list=this->getSmallShell()->getJobsList();
+    the_job_list->removeFinishedJobs();
+    Command *leftcommand;
+    Command *rightcommand;
+
+    pid_t main_pid = fork();
+    if(main_pid == -1){
+        perror("smash error: fork failed");
+        return;
+    }
+    else if(main_pid !=0) {
+        this->setPid(main_pid);
+        this->getSmallShell()->setForePid(this->getProccesPid());
+        // TODO: add function that set the current running external
+        waitpid(this->getProccesPid(), nullptr, WUNTRACED);
+        JobsList *the_job_list1 = this->getSmallShell()->getJobsList();
+        the_job_list1->removeFinishedJobs();
+    }
+    else{
+        if(setpgrp()==-1){
+            perror("smash error: setpgrp failed");
+            return;
+
+        }
+        int pipefd[2];
+        if(pipe(pipefd)==-1){
+            perror("smash error: pipe failed");
+            return;
+        }
+        pid_t temp_pid = fork();
+        if(temp_pid == -1){
+            perror("smash error: fork failed");
+            return;
+        }
+        if (temp_pid == 0) {
+            if(setpgrp()==-1){
+                perror("smash error: setpgrp failed");
+                return;
+            }
+            if(close(writetype)==-1){
+                perror("smash error: close failed");
+                return;
+
+            }
+            if(dup2(pipefd[1], writetype)==-1){
+                perror("smash error: dup2 failed");
+                return;
+
+            }
+            if(close(pipefd[0])==-1){
+                perror("smash error: close failed");
+                return;
+
+            }
+            if(close(pipefd[1])==-1){
+                perror("smash error: close failed");
+                return;
+
+            }
+            const char* left_string_char=left_command_;
+            leftcommand =this->getSmallShell()->CreateCommand(left_string_char);
+            if(leftcommand) {
+                    leftcommand->execute();
+            }
+            pid_t left_command_pid=leftcommand->getProccesPid();
+            while(waitpid(left_command_pid,nullptr,WUNTRACED) > -1){}
+
+            if(close(type_)==-1){
+                perror("smash error: close failed");
+                return;
+            }
+            exit(0);
+        }
+        pid_t temp_pid1 = fork();
+        if(temp_pid1 == -1){
+            perror("smash error: fork failed");
+            return;
+        }
+        else if (temp_pid1 == 0) {
+            if(setpgrp()==-1){
+                perror("smash error: setpgrp failed");
+                return;
+            }
+            if(close(STDIN_FILENO)==-1){
+                perror("smash error: close failed");
+                return;
+
+            }
+            if(dup2(pipefd[0], STDIN_FILENO)==-1){
+                perror("smash error: dup2 failed");
+                return;
+            }
+            if(close(pipefd[1])){
+                perror("smash error: close failed");
+                return;
+            }
+            if(close(pipefd[0])==-1){
+                perror("smash error: close failed");
+                return;
+            }
+
+            const char* right_string_char=right_command_;
+
+            rightcommand = this->getSmallShell()->CreateCommand(right_string_char);
+            if(rightcommand) {
+                    rightcommand->execute();
+            }
+            pid_t rightcommandpid=rightcommand->getProccesPid();
+            while(waitpid(rightcommandpid,nullptr,WUNTRACED) > -1){}
+
+            if(close(STDIN_FILENO)==-1){
+                perror("smash error: close failed");
+                return;
+            }
+            exit(0);
+        }
+        PipeCommand::pid_left= temp_pid1;
+        PipeCommand::pid_right = temp_pid;
+        if(close(pipefd[0])==-1){
+            perror("smash error: close failed");
+            return;
+        }
+        if(close(pipefd[1])==-1){
+            perror("smash error: close failed");
+            return;
+        }
+
+
+        if(signal(SIGCONT , sigcont)==SIG_ERR) {
+            perror("smash error: close failed");
+            return;
+        }
+        for(int i=0;i<4;i++ ){
+            int tempstatus;
+            wait(&tempstatus);
+        }
+        exit(0);
+}
 
 
 //************************* SmallShell implementation******************************///

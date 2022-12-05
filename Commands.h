@@ -153,13 +153,14 @@ class PipeCommand : public Command {
    PipeType type_;
    const char* right_command_;
    const char* left_command_;
-   static pid_t pid_right;
-    static pid_t pid_left;
+
 
  public:
   PipeCommand(const char* cmd_line);
   virtual ~PipeCommand() {}
   void execute() override;
+    static pid_t pid_right;
+    static pid_t pid_left;
 };
 
 class RedirectionCommand : public Command {

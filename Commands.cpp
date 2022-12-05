@@ -759,7 +759,27 @@ void RedirectionCommand::execute() {
     }
 }
 
+void sigcont(int sig){
+    pid_t leftpid=PipeCommand::pid_left;
+    pid_t rightpid=PipeCommand::pid_right;
+    if(rightpid > 0){
+        if(kill(rightpid,SIGCONT)==-1){
+            perror("smash error: kill failed");
+            return;
+        }
+    }
+    if(leftpid > 0 ){
+        if(kill(leftpid,SIGCONT)==-1){
+            perror("smash error: kill failed");
+            return;
+        }
+    }
 
+    if(waitpid(-1, nullptr,0)){
+        perror("smash error: waitpid failed");
+        return;
+        }
+}
 
 PipeCommand::PipeCommand(const char *cmd_line) : Command(cmd_line){
     this->makePipe();

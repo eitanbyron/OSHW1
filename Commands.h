@@ -61,7 +61,6 @@ public:
 
 
 class ChpromptCommand : public BuiltInCommand {
-    // TODO: Add your data members
     string prompt;
 public:
     ChpromptCommand(const char* cmd_line);
@@ -95,7 +94,6 @@ public:
 };
 
 class JobsCommand : public BuiltInCommand {
-    // TODO: Add your data members
     JobsList *job_list;
 public:
     JobsCommand(const char* cmd_line, JobsList* jobs);
@@ -114,7 +112,6 @@ public:
 };
 
 class BackgroundCommand : public BuiltInCommand {
-    // TODO: Add your data members
     JobsList* job_list;
 public:
     BackgroundCommand(const char* cmd_line, JobsList* jobs);
@@ -197,8 +194,9 @@ public:
 };
 
 class TimeoutCommand : public BuiltInCommand {
-/* Optional */
-// TODO: Add your data members
+    const char* only_command_;
+    int duration_;
+
 public:
     explicit TimeoutCommand(const char* cmd_line);
     virtual ~TimeoutCommand() {}
@@ -266,6 +264,7 @@ private:
     pid_t fore_pid_;
     JobsList* jobs_list_;
     char* shell_prev_dir_;
+    ExternalCommand* curr_external;
 
 
     SmallShell();
@@ -290,6 +289,8 @@ public:
     JobsList* getJobsList();
     char* getPrevDir();
     void setPrevDir(char* new_prev_dir);
+    ExternalCommand* getCurrExternal();
+    void setCurrExternal (ExternalCommand* new_exeternal);
 };
 
 #endif //SMASH_COMMAND_H_

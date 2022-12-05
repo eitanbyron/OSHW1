@@ -932,6 +932,41 @@ void PipeCommand::execute() {
 }
 
 
+TimeoutCommand::TimeoutCommand(const char *cmd_line) : BuiltInCommand(cmd_line) {
+    if (this->args_[1])
+    {
+        try{
+            duration_ = stoi(args_[1]);
+        }
+        catch  (std::invalid_argument &e) {
+            duration_=-1;
+        }
+    }
+    else
+        duration_ = -1;
+    if (args_[2]) {
+        string s = args_[2];
+        for (int i = 3; i < this->getNumofArgs(); i++) {
+            s.append(" ");
+            s.append(args_[i]);
+        }
+        only_command_ = s.c_str();
+    }
+    else
+        only_command_ = nullptr;
+}
+
+void TimeoutCommand::execute() {
+    if ((duration_ <= 0) || (!only_command_)) {
+        std::cerr << "smash error: timeout: invalid arguments";
+        return;
+    }
+
+}
+
+
+
+
 //************************* SmallShell implementation******************************///
 
 void SmallShell::setMessage(std::string new_message) {
@@ -962,12 +997,21 @@ void SmallShell::setPrevDir(char *new_prev_dir) {
     this->shell_prev_dir_=new_prev_dir;
 }
 
+ExternalCommand* SmallShell::getCurrExternal() {
+    return this->curr_external;
+}
+
+void SmallShell::setCurrExternal(ExternalCommand *new_exeternal) {
+    this->curr_external = new_exeternal;
+}
+
 
 SmallShell::SmallShell(): shell_pid_(getpid())  //getpid function from unistd.h
 {
     this->fore_pid_=-1;
     this->jobs_list_ = new JobsList();
     this->shell_prev_dir_ = nullptr;
+    this->curr_external= nullptr;
 }
 
 SmallShell::~SmallShell() {

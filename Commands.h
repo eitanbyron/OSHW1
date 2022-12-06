@@ -31,6 +31,7 @@ class Command {
   bool is_background_ = false;
   bool is_pipe_ =false;
   char command_name_[COMMAND_ARGS_MAX_LENGTH];
+  time_t procces_starting_time;
 
  public:  
   Command(const char* cmd_line);
@@ -197,18 +198,16 @@ public:
 
 class TimeoutCommand : public Command {
     const char* only_command_;
-    time_t start_time;
     time_t end_time;
     Command* the_cmd;
     bool finish;
     int duration;
-
+    string command_str;
 public:
     explicit TimeoutCommand(const char* cmd_line);
     virtual ~TimeoutCommand() {}
     void execute() override;
-    getStartTime(){return this->start_time;}
-    getEndTime(){return this->end_time;}
+    //getEndTime(){return this->end_time;}
 
 };
 
@@ -222,13 +221,16 @@ class JobsList {
   int job_id;
   Command* command;
   bool is_stopped;
-  time_t job_starting_time; //need to add set for this field 
+  time_t job_starting_time; 
   int procces_pid;
 
   public:
 
   JobEntry(int id, Command* command,bool is_stopped=false)
-          :job_id(id),command(command),is_stopped(is_stopped){}
+          :job_id(id),command(command),is_stopped(is_stopped){
+            procces_pid=this->command->getProccesPid();
+            time(&(job_starting_time));
+          }
   int getJobId(){return this->job_id;}
   bool isJobStopped(){return this->is_stopped;}
   time_t getJobStartingTime(){return this->job_starting_time;}

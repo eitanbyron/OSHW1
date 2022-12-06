@@ -117,7 +117,18 @@ void TimeoutCommand::execute()
         std::cerr<<"smash error: timeout: invalid arguments";
         return;
     }
-    
+    this->command_str=this->args_[2];
+    //  for (int i = 3; i < getNumofArg(); i++) {
+    //      command_str = command_str + " " + arg[i];
+    //  }
+    this->the_cmd= this->getSmallShell()->CreateCommand(this->command_str.c_str());
+    if(!the_cmd)return;
+    this->getSmallShell()->timeout_list_.push_back(*this);
+    time_t s_time=time(nullptr);
+    end_time=s_time+duration;
+    alarm(this->duration);
+    the_cmd->execute();
+
 }
 
 int Command::getNumofArgs() {
@@ -157,7 +168,7 @@ void Command::setPrevDir(char *new_prev_dir) {
 }
 
 Command::Command(const char *cmd_line) {
-
+    procces_starting_time(time(nullptr));
     this->cmd_pid_ =-1;
     this->is_background_ = _isBackgroundComamnd(cmd_line);
     for(int i=0; i<COMMAND_MAX_ARGS; i++)
@@ -171,6 +182,7 @@ Command::Command(const char *cmd_line) {
              _removeBackgroundSign(this->args_[i]);
         }
     }
+    
 }
 
 

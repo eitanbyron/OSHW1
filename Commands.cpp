@@ -93,6 +93,32 @@ CmdType checkCommandType (const char* cmd_line)
 }
 
 //*************************Command implementation******************************///
+TimeoutCommand::TimeoutCommand(const char *cmd_line) : Command(cmd_line) 
+{
+    this->finish=false;    
+}
+void TimeoutCommand::execute()
+{
+    if(this->getNumofArgs()<3)
+    {
+        std::cerr<<"smash error: timeout: invalid arguments";
+        return ;
+    }
+    try{
+        int dur=stoi(args_[1]);
+        if(dur<=0)
+        {
+            std::cerr<<"smash error: timeout: invalid arguments";
+            return;
+        }else{
+            this->duration=dur;
+        }
+    }catch(std::invalid_argument& e){
+        std::cerr<<"smash error: timeout: invalid arguments";
+        return;
+    }
+    
+}
 
 int Command::getNumofArgs() {
     return this->args_num_;
@@ -624,12 +650,15 @@ void ExternalCommand::execute()
       return;
     }
   }else{ 
-        if(is_bg)
+    if(is_bg)
     {
       this->setPid(curr_pid);
       this->getSmallShell()->getJobsList()->addJob(this);
     }else{
+
+      this->getSmallShell()->setCurrExternal(this);
       this->getSmallShell()->setForePid(curr_pid);
+      
       if(waitpid(curr_pid,nullptr,WSTOPPED)==-1)
       {
         perror("smash error: waitpid failed");
@@ -958,39 +987,41 @@ void PipeCommand::execute() {
 }
 
 
-TimeoutCommand::TimeoutCommand(const char *cmd_line) : BuiltInCommand(cmd_line) {
-    if (this->args_[1])
-    {
-        try{
-            duration_ = stoi(args_[1]);
-        }
-        catch  (std::invalid_argument &e) {
-            duration_=-1;
-        }
-    }
-    else
-        duration_ = -1;
-    if (args_[2]) {
-        string s = args_[2];
-        for (int i = 3; i < this->getNumofArgs(); i++) {
-            s.append(" ");
-            s.append(args_[i]);
-        }
-        only_command_ = s.c_str();
-    }
-    else
-        only_command_ = nullptr;
-}
 
-void TimeoutCommand::execute() {
-    if ((duration_ <= 0) || (!only_command_) || (this->getNumofArgs() <3)) {
-        std::cerr << "smash error: timeout: invalid arguments";
-        return;
-    }
 
-    //TODO: FINISH THE FUNCTION
+// TimeoutCommand::TimeoutCommand(const char *cmd_line) : BuiltInCommand(cmd_line) {
+//     if (this->args_[1])
+//     {
+//         try{
+//             duration_ = stoi(args_[1]);
+//         }
+//         catch  (std::invalid_argument &e) {
+//             duration_=-1;
+//         }
+//     }
+//     else
+//         duration_ = -1;
+//     if (args_[2]) {
+//         string s = args_[2];
+//         for (int i = 3; i < this->getNumofArgs(); i++) {
+//             s.append(" ");
+//             s.append(args_[i]);
+//         }
+//         only_command_ = s.c_str();
+//     }
+//     else
+//         only_command_ = nullptr;
+// }
 
-}
+// void TimeoutCommand::execute() {
+//     if ((duration_ <= 0) || (!only_command_) || (this->getNumofArgs() <3)) {
+//         std::cerr << "smash error: timeout: invalid arguments";
+//         return;
+//     }
+
+//     //TODO: FINISH THE FUNCTION
+
+// }
 
 
 

@@ -195,14 +195,21 @@ public:
     void execute() override;
 };
 
-class TimeoutCommand : public BuiltInCommand {
+class TimeoutCommand : public Command {
     const char* only_command_;
-    int duration_;
+    time_t start_time;
+    time_t end_time;
+    Command* the_cmd;
+    bool finish;
+    int duration;
 
 public:
     explicit TimeoutCommand(const char* cmd_line);
     virtual ~TimeoutCommand() {}
     void execute() override;
+    getStartTime(){return this->start_time;}
+    getEndTime(){return this->end_time;}
+
 };
 
 
@@ -244,9 +251,9 @@ class JobsList {
   void addJob(Command* cmd, bool isStopped = false);
   void printJobsList();
   void killAllJobs();
-  void removeFinishedJobs();// to be done
+  void removeFinishedJobs();
   JobEntry * getJobById(int jobId);
-  void removeJobById(int jobId);// to be done
+  void removeJobById(int jobId);
   JobEntry * getLastJob(int* lastJobId);
   JobEntry *getLastStoppedJob(int *jobId);
   // TODO: Add extra methods or modify exisitng ones as needed
@@ -295,6 +302,7 @@ public:
     void setPrevDir(char* new_prev_dir);
     Command* getCurrExternal();
     void setCurrExternal (Command* new_external);
+    pid_t getForePid(){this->fore_pid_;}
 };
 
 #endif //SMASH_COMMAND_H_

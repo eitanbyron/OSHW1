@@ -1,6 +1,8 @@
 #include <iostream>
-#include <signal.h>
+//#include <signal.h>
 #include "signals.h"
+#include <signal.h>
+
 #include "Commands.h"
 using namespace std;
 
@@ -45,7 +47,7 @@ void ctrlCHandler(int sig_num) {
 
 void alarmHandler(int sig_num) {
   cout<<"smash: got an alarm"<<endl;
-  SmallShell& inst = SmallShell::getInstance();
+ // SmallShell& inst = SmallShell::getInstance();
 
 
 }

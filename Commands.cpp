@@ -1,12 +1,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
+#include "Commands.h"
 #include <vector>
 #include <sstream>
 #include <sys/wait.h>
 #include <iomanip>
 #include "fcntl.h"
-#include "Commands.h"
 
 using namespace std;
 
@@ -140,11 +140,11 @@ void Command::setNumofArgs(int new_num) {
 }
 
 void Command::connectShell(SmallShell *smash) {
-    Command::current_shell = smash;
+    Command::setSmallSell(smash);
 }
 
 pid_t Command::getShellPid() {
-    return current_shell->getShellPid();
+    return this->getSmallShell()->getShellPid();
 }
 
 void Command::makePipe() {
@@ -164,11 +164,12 @@ pid_t Command::getProccesPid() {
 }
 
 void Command::setPrevDir(char *new_prev_dir) {
-    this->current_shell->setPrevDir(new_prev_dir);
+  //  this->current_shell->setPrevDir(new_prev_dir);
+    this->getSmallShell()->setPrevDir(new_prev_dir);
 }
 
 Command::Command(const char *cmd_line) {
-    procces_starting_time(time(nullptr));
+    procces_starting_time=time(nullptr);
     this->cmd_pid_ =-1;
     this->is_background_ = _isBackgroundComamnd(cmd_line);
     for(int i=0; i<COMMAND_MAX_ARGS; i++)
@@ -176,12 +177,14 @@ Command::Command(const char *cmd_line) {
     this->args_num_ = _parseCommandLine(cmd_line, args_) + 1;//parse return num of args or num -1?
     if (this->is_background_)
     {
+        //need to correct
         for (int i =0; i<args_num_; i++)
         {
          if(_isBackgroundComamnd(this->args_[i]))
              _removeBackgroundSign(this->args_[i]);
         }
     }
+    this->current_shell=&(SmallShell::getInstance());
     
 }
 
@@ -416,7 +419,7 @@ void KillCommand::execute()
     }
 }
 
-BackgroundCommand::BackgroundCommand(const_cast* cmd_line , JobsList* job_list):BuiltInCommand(cmd_line),job_list(job_list){}
+BackgroundCommand::BackgroundCommand(const char* cmd_line , JobsList* job_list):BuiltInCommand(cmd_line),job_list(job_list){}
 
 void BackgroundCommand::execute()
 {
@@ -429,8 +432,8 @@ void BackgroundCommand::execute()
   JobsList::JobEntry*  job_to_resume=nullptr;
   if(getNumofArgs()==1)
   {
-    job_id=this->job_list->getLastStoppedJob()->getJobId();
-    job_to_resume=this->job_list->getJobById(job_id);
+    job_to_resume=this->job_list->getLastStoppedJob(&job_id);
+    //job_to_resume=this->job_list->getJobById(job_id);
     if((!job_to_resume) || (job_id==-1))
     {
       std::cerr << "smash error: bg: there is no stopped jobs to resume";
@@ -464,8 +467,11 @@ void BackgroundCommand::execute()
 
 
 //*************************JobsList implementation******************************///
-JobsList::JobEntry::JobEntry(int id, Command* command,bool is_stopped=false):job_id(id),command(command),is_stopped(is_stopped){}
+//JobsList::JobEntry::JobEntry(int id, Command* command,bool is_stopped=false):job_id(id),command(command),is_stopped(is_stopped){}
   
+JobsList::~JobsList() {
+    delete this->jobs_list;
+}
 void JobsList::JobEntry::stopJob()
 {
   this->setJobStatus(true);
@@ -477,7 +483,7 @@ void JobsList::JobEntry::continueJob()
 }
 
 
-void JobsList::addJob(Command* cmd, bool isStopped = false)
+void JobsList::addJob(Command* cmd, bool isStopped)
 {
   removeFinishedJobs();
   int new_job_id=0;
@@ -490,9 +496,9 @@ void JobsList::addJob(Command* cmd, bool isStopped = false)
     int last_job_id=job_list_to_update->rbegin()->getJobId();
     new_job_id=last_job_id+1;
   }
-  this->max_job_id++;
+  this->max_job_id=new_job_id;
   JobsList::JobEntry* new_job= new JobsList::JobEntry(this->max_job_id,cmd,isStopped);
-  job_list_to_update->push_back(new_job);
+  job_list_to_update->push_back(*new_job);
 }
 
 void JobsList::killAllJobs()
@@ -532,7 +538,7 @@ void JobsList::removeFinishedJobs()
     prev=curr;
     curr++;
   }
-  this->max_job_id=this->getLastJob()->getJobId();
+  this->getLastJob(&max_job_id);
 }
 
 void JobsList::removeJobById(int jobId)
@@ -540,7 +546,7 @@ void JobsList::removeJobById(int jobId)
   vector<JobEntry>::iterator curr=this->getJobsList()->begin();
   vector<JobEntry>::iterator end_of_list=this->getJobsList()->end();
   int max_id=0;
-  for(curr ; curr!=end_of_list ; curr++)
+  for( ; curr!=end_of_list ; curr++)
   {
     if(curr->getJobId()==jobId)
     {
@@ -567,7 +573,7 @@ JobsList::JobEntry* JobsList::getJobById(int jobId)
     int curr_id=curr->getJobId();
     if(curr_id==jobId)
     {
-      to_return=&curr;
+      to_return=&*(curr);
       return to_return;
     }
     curr++;
@@ -585,7 +591,7 @@ JobsList::JobEntry *JobsList::getLastStoppedJob(int *jobId)
     bool is_stopped=curr->isJobStopped();
     if(is_stopped)
     {
-      jobId=curr->getJobId();
+      *jobId=curr->getJobId();
       last_stopped_job=&*(curr);
     }
     curr++;
@@ -599,8 +605,8 @@ JobsList::JobEntry *JobsList::getLastJob(int *lastJobId)
   {
     return nullptr;
   }
-  lastJobId=this->getJobsList()->end()->getJobId();//need to check type
-  return this->getJobsList()->end();//need to check return value
+  *lastJobId=this->getJobsList()->end()->getJobId();//need to check type
+  return &(this->getJobsList()->back());//need to check return value
 }
 
 
@@ -611,7 +617,7 @@ void JobsList::printJobsList()
   
   vector<JobEntry>::iterator current_job=job_list_to_print->begin();
   //iteration over all the jobs list
-  for(current_job  ; current_job != job_list_to_print->end(); current_job++)
+  for( ; current_job != job_list_to_print->end(); current_job++)
   {
       
     time_t time_diffrential=difftime(time(nullptr),current_job->getJobStartingTime());
@@ -652,7 +658,7 @@ void ExternalCommand::execute()
     char* args_to_send[4];
     args_to_send[0]=(char*)"/bin/bash";
     args_to_send[1]=(char*)"-c";
-    args_to_send[2]=this->cmd;
+    args_to_send[2]=(char*)this->cmd;
     args_to_send[2]=nullptr;
     _removeBackgroundSign(args_to_send[2]);
     

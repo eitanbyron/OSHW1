@@ -24,7 +24,7 @@ class JobsList;
 
 class Command {
 
-  static SmallShell* current_shell;
+  //static SmallShell* current_shell;
   
   int args_num_;
   pid_t cmd_pid_;
@@ -34,6 +34,8 @@ class Command {
   time_t procces_starting_time;
 
  public:  
+  static SmallShell* current_shell;
+
   Command(const char* cmd_line);
   virtual ~Command() = default;
   virtual void execute() = 0;
@@ -49,6 +51,7 @@ class Command {
   void setPrevDir(char* new_prev_dir);
   char* args_[COMMAND_MAX_ARGS];
   SmallShell* getSmallShell(){return this->current_shell;}
+  void setSmallSell(SmallShell* smash){this->current_shell=smash;}
   void makePipe();
   bool isPipe();
 };
@@ -116,6 +119,7 @@ public:
 class BackgroundCommand : public BuiltInCommand {
     JobsList* job_list;
 public:
+    //BackgroundCommand(const_cast* cmd_line , JobsList* job_list):BuiltInCommand(cmd_line),job_list(job_list){}
     BackgroundCommand(const char* cmd_line, JobsList* jobs);
     virtual ~BackgroundCommand() {}
     void execute() override;
@@ -144,7 +148,7 @@ public:
 //**********************External and Special commands***************************************//
 
 class ExternalCommand : public Command {
-  char* cmd;
+  const char* cmd;
  public:
   ExternalCommand(const char* cmd_line);
   virtual ~ExternalCommand() {}
@@ -245,10 +249,13 @@ class JobsList {
   };
  // TODO: Add your data members
  private:
-  vector<JobEntry*> jobs_list;
+  vector<JobEntry>* jobs_list;
     
  public:
-  JobsList();
+   int max_job_id;
+
+  JobsList(){jobs_list=new vector<JobEntry>;
+             max_job_id=0;}
   ~JobsList();
   void addJob(Command* cmd, bool isStopped = false);
   void printJobsList();
@@ -258,11 +265,9 @@ class JobsList {
   void removeJobById(int jobId);
   JobEntry * getLastJob(int* lastJobId);
   JobEntry *getLastStoppedJob(int *jobId);
-  // TODO: Add extra methods or modify exisitng ones as needed
   vector<JobEntry>* getJobsList(){return this->jobs_list;}
-  static int max_job_id;
 };
-int JobsList::max_job_id=0;
+//int JobsList::max_job_id=0;
 
 
 
@@ -275,7 +280,6 @@ private:
     const pid_t shell_pid_;
     pid_t fore_pid_;
     JobsList* jobs_list_;
-    std::list<TimeoutCommand> timeout_list_;
     char* shell_prev_dir_;
     Command* curr_external;
 
@@ -304,7 +308,9 @@ public:
     void setPrevDir(char* new_prev_dir);
     Command* getCurrExternal();
     void setCurrExternal (Command* new_external);
-    pid_t getForePid(){this->fore_pid_;}
+    pid_t getForePid(){return this->fore_pid_;}
+    std::list<TimeoutCommand> timeout_list_;
+
 };
 
 #endif //SMASH_COMMAND_H_

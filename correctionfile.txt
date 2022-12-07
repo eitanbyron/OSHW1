@@ -1,0 +1,4 @@
+g++ --std=c++11 -Wall -c Commands.cpp
+Makefile:24: recipe for target 'Commands.o' failed
+g++ --std=c++11 -Wall -c Commands.cpp
+Makefile:24: recipe for target 'Commands.o' failed

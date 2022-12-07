@@ -198,6 +198,8 @@ ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **plastPwd) : Buil
 
 void ChangeDirCommand::execute() {
     int args_num = this->getNumofArgs();
+    if (args_[1] == nullptr)
+        return;
     string temp_arg= args_[1];
     if (args_num <= 1)
         return;
@@ -319,6 +321,8 @@ QuitCommand::QuitCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(
 
 void QuitCommand::execute() {
     bool kill_all =false;
+    if (args_[1] == nullptr)
+        return;
     string temp_arg = args_[1];
     for (int i=0; i<this->getNumofArgs(); i++)
     {
@@ -689,6 +693,8 @@ RedirectionCommand::RedirectionCommand(const char *cmd_line) : Command(cmd_line)
     bool second = false;
     for (int i = 0; i < args_num; i++)
     {
+        if ((args_[i] == nullptr) || (args_[i+1] == nullptr))
+            return;
         string temp_arg1 = args_[i];
         string temp_arg2 = args_[i+1];
         if ((temp_arg1 != ">" ) && (temp_arg1 != ">>"))
@@ -732,6 +738,8 @@ void RedirectionCommand::execute() {
         perror("smash error: open failed");
         return;
     }
+    if (args_[0] == nullptr)
+        return;
     string command_name =args_[0];
     bool is_simple = ((command_name == "chprompt") || (command_name == "showpid") || (command_name == "pwd") ||
             (command_name == "cd") || (command_name == "jobs") || (command_name == "fg") || (command_name == "bg") ||
@@ -828,6 +836,8 @@ PipeCommand::PipeCommand(const char *cmd_line) : Command(cmd_line){
     bool second = false;
     for (int i = 0; i < args_num; i++)
     {
+        if ((args_[i] == nullptr) || (args_[i+1] == nullptr))
+            return;
         string temp_arg1 =args_[i];
         string temp_arg2 = args_[i+1];
         if ((temp_arg1 != "|" )&& (temp_arg1 != "&") && (temp_arg1 != "|&"))

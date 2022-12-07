@@ -50,8 +50,6 @@ class Command {
   void setPid(pid_t process_pid);
   void setPrevDir(char* new_prev_dir);
   char* args_[COMMAND_MAX_ARGS];
-  SmallShell* getSmallShell(){return this->current_shell;}
-  void setSmallSell(SmallShell* smash){this->current_shell=smash;}
   void makePipe();
   bool isPipe();
 };

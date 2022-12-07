@@ -139,10 +139,6 @@ void Command::setNumofArgs(int new_num) {
     args_num_ =new_num;
 }
 
-void Command::connectShell(SmallShell *smash) {
-    Command::setSmallSell(smash);
-}
-
 pid_t Command::getShellPid() {
     return SmallShell::getInstance().getShellPid();
 }
@@ -1144,7 +1140,6 @@ void SmallShell::executeCommand(const char *cmd_line) {
   Command* cmd = CreateCommand(cmd_line);
   if (cmd)
   {
-    cmd->connectShell(this);
     cmd->execute();
   }
 }

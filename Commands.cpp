@@ -121,9 +121,9 @@ void TimeoutCommand::execute()
     //  for (int i = 3; i < getNumofArg(); i++) {
     //      command_str = command_str + " " + arg[i];
     //  }
-    this->the_cmd= this->getSmallShell()->CreateCommand(this->command_str.c_str());
+    this->the_cmd=  SmallShell::getInstance().CreateCommand(this->command_str.c_str());
     if(!the_cmd)return;
-    this->getSmallShell()->timeout_list_.push_back(*this);
+   SmallShell::getInstance().timeout_list_.push_back(*this);
     time_t s_time=time(nullptr);
     end_time=s_time+duration;
     alarm(this->duration);
@@ -144,7 +144,7 @@ void Command::connectShell(SmallShell *smash) {
 }
 
 pid_t Command::getShellPid() {
-    return this->getSmallShell()->getShellPid();
+    return SmallShell::getInstance().getShellPid();
 }
 
 void Command::makePipe() {
@@ -164,8 +164,7 @@ pid_t Command::getProccesPid() {
 }
 
 void Command::setPrevDir(char *new_prev_dir) {
-  //  this->current_shell->setPrevDir(new_prev_dir);
-    this->getSmallShell()->setPrevDir(new_prev_dir);
+    SmallShell::getInstance().setPrevDir(new_prev_dir);
 }
 
 Command::Command(const char *cmd_line) {
@@ -278,8 +277,8 @@ void ForegroundCommand::execute() {
     {
         int wait_status;
         pid_t command_pid = the_job->getProccesPid();
-        this->getSmallShell()->setCurrExternal(the_job->getCommand());
-        this->getSmallShell()->setForePid(command_pid);
+        SmallShell::getInstance().setCurrExternal(the_job->getCommand());
+        SmallShell::getInstance().setForePid(command_pid);
         std::cout << the_job->getCommand()->getCommandName() << " : " << the_job->getProccesPid();
         bool stopped_status = the_job->isJobStopped();
         this->jobs_list->removeJobById(job_id);
@@ -355,7 +354,7 @@ void ChpromptCommand::execute()
   }else{
     prompt=this->args_[1];
   }
-  getSmallShell()->setMessage(prompt);
+    SmallShell::getInstance().setMessage(prompt);
 }
 
 GetCurrDirCommand::GetCurrDirCommand(const char* cmd_line):BuiltInCommand(cmd_line){}
@@ -671,11 +670,10 @@ void ExternalCommand::execute()
     if(is_bg)
     {
       this->setPid(curr_pid);
-      this->getSmallShell()->getJobsList()->addJob(this);
+        SmallShell::getInstance().getJobsList()->addJob(this);
     }else{
-
-      this->getSmallShell()->setCurrExternal(this);
-      this->getSmallShell()->setForePid(curr_pid);
+        SmallShell::getInstance().setCurrExternal(this);
+        SmallShell::getInstance().setForePid(curr_pid);
       
       if(waitpid(curr_pid,nullptr,WSTOPPED)==-1)
       {
@@ -754,7 +752,7 @@ void RedirectionCommand::execute() {
             perror("smash error: dup2 failed");
             return;
         }
-        this->getSmallShell()->executeCommand(args_[0]);
+        SmallShell::getInstance().executeCommand(args_[0]);
         if (dup2(temp_fd, STDOUT_FILENO) == -1)
         {
             perror("smash error: dup2 failed");
@@ -790,7 +788,7 @@ void RedirectionCommand::execute() {
                 perror("smash error: close failed");
                 return;
             }
-            this->getSmallShell()->executeCommand(args_[0]);
+            SmallShell::getInstance().executeCommand(args_[0]);
             exit(0);
         }
         else
@@ -869,7 +867,7 @@ PipeCommand::PipeCommand(const char *cmd_line) : Command(cmd_line){
 
 
 void PipeCommand::execute() {
-    JobsList *the_job_list = this->getSmallShell()->getJobsList();
+    JobsList *the_job_list =  SmallShell::getInstance().getJobsList();
     the_job_list->removeFinishedJobs();
     Command *leftcommand;
     Command *rightcommand;
@@ -880,10 +878,10 @@ void PipeCommand::execute() {
         return;
     } else if (main_pid != 0) {
         this->setPid(main_pid);
-        this->getSmallShell()->setForePid(this->getProccesPid());
-        this->getSmallShell()->setCurrExternal(this);
+        SmallShell::getInstance().setForePid(this->getProccesPid());
+        SmallShell::getInstance().setCurrExternal(this);
         waitpid(this->getProccesPid(), nullptr, WUNTRACED);
-        JobsList *the_job_list1 = this->getSmallShell()->getJobsList();
+        JobsList *the_job_list1 =  SmallShell::getInstance().getJobsList();
         the_job_list1->removeFinishedJobs();
     } else {
         if (setpgrp() == -1) {
@@ -927,7 +925,7 @@ void PipeCommand::execute() {
 
             }
             const char *left_string_char = left_command_;
-            leftcommand = this->getSmallShell()->CreateCommand(left_string_char);
+            leftcommand =  SmallShell::getInstance().CreateCommand(left_string_char);
             if (leftcommand) {
                 leftcommand->execute();
             }
@@ -969,7 +967,7 @@ void PipeCommand::execute() {
 
             const char *right_string_char = right_command_;
 
-            rightcommand = this->getSmallShell()->CreateCommand(right_string_char);
+            rightcommand = SmallShell::getInstance().CreateCommand(right_string_char);
             if (rightcommand) {
                 rightcommand->execute();
             }

@@ -689,7 +689,8 @@ void ExternalCommand::execute()
 
 RedirectionCommand::RedirectionCommand(const char *cmd_line) : Command(cmd_line) {
     int args_num = this-> getNumofArgs();
-    string s1,s2;
+    string s1 = "";
+    string s2 ="";
     bool second = false;
     for (int i = 0; i < args_num; i++)
     {
@@ -832,7 +833,8 @@ void sigcont(int sig){
 PipeCommand::PipeCommand(const char *cmd_line) : Command(cmd_line){
     this->makePipe();
     int args_num = this-> getNumofArgs();
-    string s1, s2;
+    string s1 = "";
+    string s2 ="";
     bool second = false;
     for (int i = 0; i < args_num; i++)
     {

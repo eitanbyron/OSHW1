@@ -185,6 +185,9 @@ class RedirectionCommand : public Command {
 class FareCommand : public BuiltInCommand {
     /* Optional */
     // TODO: Add your data members
+    int counter;
+    string source;
+    string destination;
 public:
     FareCommand(const char* cmd_line);
     virtual ~FareCommand() {}

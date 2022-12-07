@@ -198,9 +198,21 @@ void ShowPidCommand::execute() {
     std::cout << "smash pid is " <<this->getShellPid()<<std::endl;
 }
 
+void FareCommand::execute(){
+    if(this->getNumofArgs()!=4)
+    {
+        perror("smash error: fare: invalid arguments");
+        return;
+    }
+}
+FareCommand::FareCommand(const char* cmd_line):BuiltInCommand(cmd_line){}
+
+
+
 ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **plastPwd) : BuiltInCommand(cmd_line) {
     last_directory = plastPwd;
 }
+
 
 void ChangeDirCommand::execute() {
     int args_num = this->getNumofArgs();

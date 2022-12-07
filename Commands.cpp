@@ -179,7 +179,6 @@ Command::Command(const char *cmd_line) {
              _removeBackgroundSign(this->args_[i]);
         }
     }
-    this->current_shell=&(SmallShell::getInstance());
     
 }
 

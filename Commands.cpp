@@ -121,9 +121,9 @@ void TimeoutCommand::execute()
     //  for (int i = 3; i < getNumofArg(); i++) {
     //      command_str = command_str + " " + arg[i];
     //  }
-    this->the_cmd= this->getSmallShell()->CreateCommand(this->command_str.c_str());
+    this->the_cmd=  SmallShell::getInstance().CreateCommand(this->command_str.c_str());
     if(!the_cmd)return;
-    this->getSmallShell()->timeout_list_.push_back(*this);
+   SmallShell::getInstance().timeout_list_.push_back(*this);
     time_t s_time=time(nullptr);
     end_time=s_time+duration;
     alarm(this->duration);
@@ -139,12 +139,8 @@ void Command::setNumofArgs(int new_num) {
     args_num_ =new_num;
 }
 
-void Command::connectShell(SmallShell *smash) {
-    Command::setSmallSell(smash);
-}
-
 pid_t Command::getShellPid() {
-    return this->getSmallShell()->getShellPid();
+    return SmallShell::getInstance().getShellPid();
 }
 
 void Command::makePipe() {
@@ -164,8 +160,7 @@ pid_t Command::getProccesPid() {
 }
 
 void Command::setPrevDir(char *new_prev_dir) {
-  //  this->current_shell->setPrevDir(new_prev_dir);
-    this->getSmallShell()->setPrevDir(new_prev_dir);
+    SmallShell::getInstance().setPrevDir(new_prev_dir);
 }
 
 Command::Command(const char *cmd_line) {
@@ -174,7 +169,7 @@ Command::Command(const char *cmd_line) {
     this->is_background_ = _isBackgroundComamnd(cmd_line);
     for(int i=0; i<COMMAND_MAX_ARGS; i++)
         this->args_[i] = nullptr;
-    this->args_num_ = _parseCommandLine(cmd_line, args_) + 1;//parse return num of args or num -1?
+    this->args_num_ = _parseCommandLine(cmd_line, args_);
     if (this->is_background_)
     {
         //need to correct
@@ -184,7 +179,6 @@ Command::Command(const char *cmd_line) {
              _removeBackgroundSign(this->args_[i]);
         }
     }
-    this->current_shell=&(SmallShell::getInstance());
     
 }
 
@@ -216,6 +210,8 @@ ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **plastPwd) : Buil
 
 void ChangeDirCommand::execute() {
     int args_num = this->getNumofArgs();
+    if (args_[1] == nullptr)
+        return;
     string temp_arg= args_[1];
     if (args_num <= 1)
         return;
@@ -290,8 +286,8 @@ void ForegroundCommand::execute() {
     {
         int wait_status;
         pid_t command_pid = the_job->getProccesPid();
-        this->getSmallShell()->setCurrExternal(the_job->getCommand());
-        this->getSmallShell()->setForePid(command_pid);
+        SmallShell::getInstance().setCurrExternal(the_job->getCommand());
+        SmallShell::getInstance().setForePid(command_pid);
         std::cout << the_job->getCommand()->getCommandName() << " : " << the_job->getProccesPid();
         bool stopped_status = the_job->isJobStopped();
         this->jobs_list->removeJobById(job_id);
@@ -337,6 +333,8 @@ QuitCommand::QuitCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(
 
 void QuitCommand::execute() {
     bool kill_all =false;
+    if (args_[1] == nullptr)
+        return;
     string temp_arg = args_[1];
     for (int i=0; i<this->getNumofArgs(); i++)
     {
@@ -367,7 +365,7 @@ void ChpromptCommand::execute()
   }else{
     prompt=this->args_[1];
   }
-  getSmallShell()->setMessage(prompt);
+    SmallShell::getInstance().setMessage(prompt);
 }
 
 GetCurrDirCommand::GetCurrDirCommand(const char* cmd_line):BuiltInCommand(cmd_line){}
@@ -683,11 +681,10 @@ void ExternalCommand::execute()
     if(is_bg)
     {
       this->setPid(curr_pid);
-      this->getSmallShell()->getJobsList()->addJob(this);
+        SmallShell::getInstance().getJobsList()->addJob(this);
     }else{
-
-      this->getSmallShell()->setCurrExternal(this);
-      this->getSmallShell()->setForePid(curr_pid);
+        SmallShell::getInstance().setCurrExternal(this);
+        SmallShell::getInstance().setForePid(curr_pid);
       
       if(waitpid(curr_pid,nullptr,WSTOPPED)==-1)
       {
@@ -704,10 +701,13 @@ void ExternalCommand::execute()
 
 RedirectionCommand::RedirectionCommand(const char *cmd_line) : Command(cmd_line) {
     int args_num = this-> getNumofArgs();
-    string s1,s2;
+    string s1 = "";
+    string s2 ="";
     bool second = false;
     for (int i = 0; i < args_num; i++)
     {
+        if ((args_[i] == nullptr) || (args_[i+1] == nullptr))
+            return;
         string temp_arg1 = args_[i];
         string temp_arg2 = args_[i+1];
         if ((temp_arg1 != ">" ) && (temp_arg1 != ">>"))
@@ -751,6 +751,8 @@ void RedirectionCommand::execute() {
         perror("smash error: open failed");
         return;
     }
+    if (args_[0] == nullptr)
+        return;
     string command_name =args_[0];
     bool is_simple = ((command_name == "chprompt") || (command_name == "showpid") || (command_name == "pwd") ||
             (command_name == "cd") || (command_name == "jobs") || (command_name == "fg") || (command_name == "bg") ||
@@ -766,7 +768,7 @@ void RedirectionCommand::execute() {
             perror("smash error: dup2 failed");
             return;
         }
-        this->getSmallShell()->executeCommand(args_[0]);
+        SmallShell::getInstance().executeCommand(args_[0]);
         if (dup2(temp_fd, STDOUT_FILENO) == -1)
         {
             perror("smash error: dup2 failed");
@@ -802,7 +804,7 @@ void RedirectionCommand::execute() {
                 perror("smash error: close failed");
                 return;
             }
-            this->getSmallShell()->executeCommand(args_[0]);
+            SmallShell::getInstance().executeCommand(args_[0]);
             exit(0);
         }
         else
@@ -843,10 +845,13 @@ void sigcont(int sig){
 PipeCommand::PipeCommand(const char *cmd_line) : Command(cmd_line){
     this->makePipe();
     int args_num = this-> getNumofArgs();
-    string s1, s2;
+    string s1 = "";
+    string s2 ="";
     bool second = false;
     for (int i = 0; i < args_num; i++)
     {
+        if ((args_[i] == nullptr) || (args_[i+1] == nullptr))
+            return;
         string temp_arg1 =args_[i];
         string temp_arg2 = args_[i+1];
         if ((temp_arg1 != "|" )&& (temp_arg1 != "&") && (temp_arg1 != "|&"))
@@ -881,7 +886,7 @@ PipeCommand::PipeCommand(const char *cmd_line) : Command(cmd_line){
 
 
 void PipeCommand::execute() {
-    JobsList *the_job_list = this->getSmallShell()->getJobsList();
+    JobsList *the_job_list =  SmallShell::getInstance().getJobsList();
     the_job_list->removeFinishedJobs();
     Command *leftcommand;
     Command *rightcommand;
@@ -892,10 +897,10 @@ void PipeCommand::execute() {
         return;
     } else if (main_pid != 0) {
         this->setPid(main_pid);
-        this->getSmallShell()->setForePid(this->getProccesPid());
-        this->getSmallShell()->setCurrExternal(this);
+        SmallShell::getInstance().setForePid(this->getProccesPid());
+        SmallShell::getInstance().setCurrExternal(this);
         waitpid(this->getProccesPid(), nullptr, WUNTRACED);
-        JobsList *the_job_list1 = this->getSmallShell()->getJobsList();
+        JobsList *the_job_list1 =  SmallShell::getInstance().getJobsList();
         the_job_list1->removeFinishedJobs();
     } else {
         if (setpgrp() == -1) {
@@ -939,7 +944,7 @@ void PipeCommand::execute() {
 
             }
             const char *left_string_char = left_command_;
-            leftcommand = this->getSmallShell()->CreateCommand(left_string_char);
+            leftcommand =  SmallShell::getInstance().CreateCommand(left_string_char);
             if (leftcommand) {
                 leftcommand->execute();
             }
@@ -981,7 +986,7 @@ void PipeCommand::execute() {
 
             const char *right_string_char = right_command_;
 
-            rightcommand = this->getSmallShell()->CreateCommand(right_string_char);
+            rightcommand = SmallShell::getInstance().CreateCommand(right_string_char);
             if (rightcommand) {
                 rightcommand->execute();
             }
@@ -1158,7 +1163,6 @@ void SmallShell::executeCommand(const char *cmd_line) {
   Command* cmd = CreateCommand(cmd_line);
   if (cmd)
   {
-    cmd->connectShell(this);
     cmd->execute();
   }
 }

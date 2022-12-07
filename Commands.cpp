@@ -169,7 +169,7 @@ Command::Command(const char *cmd_line) {
     this->is_background_ = _isBackgroundComamnd(cmd_line);
     for(int i=0; i<COMMAND_MAX_ARGS; i++)
         this->args_[i] = nullptr;
-    this->args_num_ = _parseCommandLine(cmd_line, args_) + 1;//parse return num of args or num -1?
+    this->args_num_ = _parseCommandLine(cmd_line, args_);
     if (this->is_background_)
     {
         //need to correct

@@ -724,7 +724,7 @@ void ExternalCommand::execute()
     char* argv[4]={dir,c,bash_command,nullptr};
 
     //_removeBackgroundSign(argv[2]);
-       cout<<argv[0]<<" "<<argv[1]<<" "<<argv[2]<<" "<<"salad"<<endl;
+   //    cout<<argv[0]<<" "<<argv[1]<<" "<<argv[2]<<" "<<"salad"<<endl;
 
    //cout<<args_[0]<<"  "<<args_[1]<<"chill"<<endl;
     if(execv(argv[0],argv) ==-1)

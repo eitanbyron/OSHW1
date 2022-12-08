@@ -172,15 +172,23 @@ Command::Command(const char *cmd_line) {
     this->args_num_ = _parseCommandLine(cmd_line, args_);
     if (this->is_background_)
     {
-        //need to correct
-        for (int i =0; i<args_num_; i++)
-        {
-         if(_isBackgroundComamnd(this->args_[i]))
-             _removeBackgroundSign(this->args_[i]);
+        for (int i =0; i<args_num_; i++) {
+            if (_isBackgroundComamnd(this->args_[i])){
+                char* s = this->args_[i];
+                char c = '&';
+                int writer = 0, reader = 0;
+                while (s[reader])  {
+                    if (s[reader]!=c)
+                    {
+                        s[writer++] = s[reader];
+                    }
+                    reader++;
+                }
+                s[writer]=0;
+                this->args_[i] = s;
+            }
         }
-            
-    }
-    
+        }
 }
 
 

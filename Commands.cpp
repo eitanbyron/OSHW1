@@ -374,11 +374,11 @@ QuitCommand::QuitCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(
 
 void QuitCommand::execute() {
     bool kill_all =false;
-    if (args_[1] == nullptr)
-        return;
-    string temp_arg = args_[1];
     for (int i=0; i<this->getNumofArgs(); i++)
     {
+        if (args_[i] == nullptr)
+            break;
+        string temp_arg = args_[i];
         if (temp_arg == "kill"){
             kill_all = true;
             break;

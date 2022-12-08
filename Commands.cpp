@@ -747,10 +747,7 @@ RedirectionCommand::RedirectionCommand(const char *cmd_line) : Command(cmd_line)
     bool second = false;
     for (int i = 0; i < args_num; i++)
     {
-        if ((args_[i] == nullptr) || (args_[i+1] == nullptr))
-            return;
         string temp_arg1 = args_[i];
-        string temp_arg2 = args_[i+1];
         if ((temp_arg1 != ">" ) && (temp_arg1 != ">>"))
         {
             if (!second) {
@@ -764,6 +761,9 @@ RedirectionCommand::RedirectionCommand(const char *cmd_line) : Command(cmd_line)
             }
         }
         else {
+            if (args_[i+1] == nullptr)
+                break;
+            string temp_arg2 = args_[i+1];
             if (temp_arg1 == ">") {
                 if (temp_arg2 == ">")
                     type_ = kAppend;
@@ -1193,9 +1193,9 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
             return new ExternalCommand(cmd_line);
         }
         case kPipe:
-            return new RedirectionCommand(cmd_line);
-        case kRedirection:
             return new PipeCommand(cmd_line);
+        case kRedirection:
+            return new RedirectionCommand(cmd_line);
     }
   return nullptr;
 }

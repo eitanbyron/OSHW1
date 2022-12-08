@@ -198,7 +198,39 @@ void FareCommand::execute(){
         perror("smash error: fare: invalid arguments");
         return;
     }
+    fstream file_to_read;
+    file_to_read.open(args_[1],fstream::in | fstream::out);
+    if(!file_to_read.is_open())
+    {      
+        perror("smash error: fare: invalid arguments");
+        return;
+    }
+    this->counter=0;
+    this->source=args_[2];
+    this->destination=args_[3];
+    string new_text="";
+    string line;
+    while(getline(file_to_read,line))
+    {
+        new_text.append(line);
+        new_text.append("\n");
+    }
+    file_to_read.close();
+    int pos_in_line=-1;
+    do{
+        pos_in_line=new_text.find(this->source);
+        if(pos_in_line<new_text.size()&& pos_in_line>=0)
+        {
+            new_text.replace(pos_in_line,source.length(),destination);
+            this->counter++;
+        }
+    }while(pos_in_line<new_text.size());
+   
+    file_to_read.open(args_[1],fstream::in|fstream::out|fstream::trunc);
+    file_to_read<<new_text;
+    std::cout<<"replaced "<<this->counter<<" instances of the string \""<<this->source<<"\""<<endl;
 }
+
 FareCommand::FareCommand(const char* cmd_line):BuiltInCommand(cmd_line){}
 
 

@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
+#include <fstream>
 
 
 #define COMMAND_ARGS_MAX_LENGTH (200)

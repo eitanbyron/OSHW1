@@ -225,7 +225,7 @@ void FareCommand::execute(){
         new_text.append("\n");
     }
     file_to_read.close();
-    int pos_in_line=-1;
+    unsigned int pos_in_line=0;
     do{
         pos_in_line=new_text.find(this->source);
         if(pos_in_line<new_text.size()&& pos_in_line>=0)
@@ -685,11 +685,24 @@ void JobsList::printJobsList()
 
 
 //*************************External Commands****************************************///
+
 ExternalCommand::ExternalCommand(const char* cmd_line): Command(cmd_line) , cmd(cmd_line){}
 
 void ExternalCommand::execute()
 {
+    
   bool is_bg=_isBackgroundComamnd(this->cmd);
+  string cmd_s(this->cmd);
+  if(is_bg)
+  {
+    cmd_s.pop_back();
+  }
+
+  const char* temp_cmd=cmd_s.data();
+  strcpy(this->bash_command,temp_cmd);
+
+    
+
   pid_t curr_pid=fork();
   if(curr_pid==-1)
   {
@@ -706,14 +719,15 @@ void ExternalCommand::execute()
       return;
     }
 
-    char* args_to_send[4];
-    args_to_send[0]=(char*)"/bin/bash";
-    args_to_send[1]=(char*)"-c";
-    args_to_send[2]=(char*)this->cmd;
-    args_to_send[2]=nullptr;
-    _removeBackgroundSign(args_to_send[2]);
-    
-    if(execv(args_to_send[0],args_to_send) ==-1)
+    char dir[]="/bin/bash";
+    char c[]="-c";
+    char* argv[4]={dir,c,bash_command,nullptr};
+
+    //_removeBackgroundSign(argv[2]);
+   //    cout<<argv[0]<<" "<<argv[1]<<" "<<argv[2]<<" "<<"salad"<<endl;
+
+   //cout<<args_[0]<<"  "<<args_[1]<<"chill"<<endl;
+    if(execv(argv[0],argv) ==-1)
     {
       perror("smash error: execv failed");
       return;

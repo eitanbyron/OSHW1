@@ -148,11 +148,26 @@ public:
 
 class ExternalCommand : public Command {
   const char* cmd;
+  char bash_command[COMMAND_ARGS_MAX_LENGTH];
+
  public:
   ExternalCommand(const char* cmd_line);
   virtual ~ExternalCommand() {}
   void execute() override;
 };
+
+// class ExternalCommand : public Command {
+//  public:
+//   const char* cmd;
+
+
+//     int command_job_id;
+//     ExternalCommand(const char* cmd_line,pid_t pid_new =-1);
+//   virtual ~ExternalCommand() {}
+//   void execute() override;
+//   char lnbash[COMMAND_ARGS_MAX_LENGTH];
+// };
+
 
 class PipeCommand : public Command {
    PipeType type_;

@@ -389,9 +389,10 @@ void QuitCommand::execute() {
     {
         jobs_list->removeFinishedJobs();
         int jobs_num = this->jobs_list->getJobsList()->size(); 
-        std::cout << "smash: sending SIGKILL signal to" <<jobs_num << "jobs:" <<std::endl;
+        std::cout << "smash: sending SIGKILL signal to " <<jobs_num << " jobs:" <<std::endl;
         jobs_list->killAllJobs();
     }
+    exit(0);
 }
 
 
@@ -569,9 +570,11 @@ void JobsList::killAllJobs()
 
 void JobsList::removeFinishedJobs()
 {
+  if(this->getJobsList()->empty())return;
   vector<JobEntry>::iterator prev=this->getJobsList()->begin();
   vector<JobEntry>::iterator curr=this->getJobsList()->begin();
   vector<JobEntry>::iterator end_of_list=this->getJobsList()->end();
+  
   while(curr!=end_of_list)
   {
     pid_t pid_to_check=curr->getProccesPid();
@@ -589,7 +592,9 @@ void JobsList::removeFinishedJobs()
     prev=curr;
     curr++;
   }
+  
   this->getLastJob(&max_job_id);
+
 }
 
 void JobsList::removeJobById(int jobId)
@@ -606,6 +611,7 @@ void JobsList::removeJobById(int jobId)
         this->max_job_id=max_id;
       }
       this->getJobsList()->erase(curr);
+      delete &curr;
       break;
     }
     max_id=curr->getJobId();
@@ -656,6 +662,7 @@ JobsList::JobEntry *JobsList::getLastJob(int *lastJobId)
   {
     return nullptr;
   }
+  
   *lastJobId=this->getJobsList()->end()->getJobId();//need to check type
   return &(this->getJobsList()->back());//need to check return value
 }
@@ -664,6 +671,9 @@ JobsList::JobEntry *JobsList::getLastJob(int *lastJobId)
 void JobsList::printJobsList() 
 {
   removeFinishedJobs();
+
+      cout<<"checking again"<<endl;
+
   vector<JobEntry>* job_list_to_print=this->getJobsList();
   
   vector<JobEntry>::iterator current_job=job_list_to_print->begin();
